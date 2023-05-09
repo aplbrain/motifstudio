@@ -6,3 +6,7 @@ isort
 pre-commit
 pytest
 safety
+pytest-picked
+pytest-testmon
+pytest-watch
+pytest-xdist
