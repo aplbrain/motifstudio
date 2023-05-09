@@ -6,10 +6,11 @@ FastAPI. Requests are handled by the endpoints defined in this file.
 """
 
 import datetime
-from typing import Optional
-from fastapi import FastAPI
 
-from .models import MotifSearchQueryRequest
+from fastapi import Depends, FastAPI
+
+from .routers import host_providers
+from .commons import HostProviderRouterGlobalDep
 
 __version__ = "0.1.0"
 
@@ -25,9 +26,10 @@ class Status:
 
 
 app = FastAPI()
+app.include_router(host_providers.router, dependencies=[Depends(HostProviderRouterGlobalDep)])
 
 
-def _response_with_status(data: Optional[dict] = None, status: str = Status.OK) -> dict:
+def _response_with_status(data: dict | None = None, status: str = Status.OK) -> dict:
     """
     Return a response with a status code and a data payload.
 
@@ -58,11 +60,6 @@ def read_root():
 
     """
     return _response_with_status({"server_version": __version__})
-
-
-@app.post("/search/motifs")
-def read_item(request: MotifSearchQueryRequest):
-    return _response_with_status({"query": request.query, "host_id": request.host_id})
 
 
 __all__ = ["app"]
