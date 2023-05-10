@@ -1,5 +1,6 @@
 from typing import Protocol
 import tempfile
+from models import HostListing
 import networkx as nx
 import boto3
 
@@ -13,7 +14,24 @@ class HostProvider(Protocol):
 
     def accepts(self, uri: str) -> bool:
         """
-        Return True if this runner can handle the URI.
+        Return True if this provider can handle the URI.
+
+        Accept calls should run quickly and do minimal work so that the router
+        can quickly find the correct provider.
+
+        """
+        raise NotImplementedError()
+
+    def get_vertex_count(self, uri: str) -> int:
+        """
+        Return the number of vertices in the graph.
+
+        """
+        raise NotImplementedError()
+
+    def get_edge_count(self, uri: str) -> int:
+        """
+        Return the number of edges in the graph.
 
         """
         raise NotImplementedError()
@@ -37,7 +55,21 @@ class GraphMLHostProvider(HostProvider):
         Return a NetworkX graph for the URI.
 
         """
-        return nx.read_graphml(uri)
+        return nx.read_graphml(uri)  # type: ignore
+
+    def get_vertex_count(self, uri: str) -> int:
+        """
+        Return the number of vertices in the graph.
+
+        """
+        return len(self.get_networkx_graph(uri).nodes)
+
+    def get_edge_count(self, uri: str) -> int:
+        """
+        Return the number of edges in the graph.
+
+        """
+        return len(self.get_networkx_graph(uri).edges)
 
 
 class S3GraphMLHostProvider(GraphMLHostProvider):
@@ -104,25 +136,40 @@ class HostProviderRouter:
     def __init__(self, providers: list[HostProvider] | None = None):
         self._providers: list[HostProvider] = providers or []
 
-    def add_runner(self, runner: HostProvider):
+    def add_provider(self, provider: HostProvider):
         """
-        Add a runner to the router.
+        Add a provider to the router.
 
         """
-        self._providers.append(runner)
+        self._providers.append(provider)
 
-    def runner_for(self, uri: str) -> HostProvider | None:
+    def provider_for(self, uri: str) -> HostProvider | None:
         """
-        Return the first runner that accepts the URI.
+        Return the first provider that accepts the URI.
 
         """
-        for runner in self._providers:
-            if runner.accepts(uri):
-                return runner
+        for provider in self._providers:
+            if provider.accepts(uri):
+                return provider
         return None
 
+    def validate_all_hosts(self, host_uris: list[str] | list[HostListing]) -> list[bool]:
+        """
+        Return a list of booleans indicating whether each host is valid.
 
-runner_name_map = {
+        Arguments:
+            hosts: A list of host URIs.
+
+        Returns:
+            A list of booleans indicating whether each host is valid.
+
+        """
+        return [
+            self.provider_for(host.uri if isinstance(host, HostListing) else host) is not None for host in host_uris
+        ]
+
+
+provider_name_map = {
     "s3graphml": S3GraphMLHostProvider,
     "fsgraphml": FilesystemGraphMLHostProvider,
 }
@@ -132,5 +179,5 @@ __all__ = [
     "S3GraphMLHostProvider",
     "FilesystemGraphMLHostProvider",
     "HostProviderRouter",
-    "runner_name_map",
+    "provider_name_map",
 ]

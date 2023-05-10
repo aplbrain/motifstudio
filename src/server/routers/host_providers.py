@@ -19,6 +19,4 @@ def list_host_providers(
 def list_hosts(
     commons: Annotated[HostProviderRouterGlobalDep, Depends(HostProviderRouterGlobalDep)]
 ) -> dict[str, list[str]]:
-    return {
-        "host_providers": commons.all_hosts,
-    }
+    return {"host_providers": [host.name for host in commons.all_hosts]}

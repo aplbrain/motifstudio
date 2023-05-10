@@ -9,7 +9,7 @@ import datetime
 
 from fastapi import Depends, FastAPI
 
-from .routers import host_providers
+from .routers import host_providers, queries
 from .commons import HostProviderRouterGlobalDep
 
 __version__ = "0.1.0"
@@ -27,6 +27,7 @@ class Status:
 
 app = FastAPI()
 app.include_router(host_providers.router, dependencies=[Depends(HostProviderRouterGlobalDep)])
+app.include_router(queries.router, dependencies=[Depends(HostProviderRouterGlobalDep)])
 
 
 def _response_with_status(data: dict | None = None, status: str = Status.OK) -> dict:
