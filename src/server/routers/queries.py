@@ -13,6 +13,8 @@ from ...models import (
     EdgeCountQueryResponse,
     MotifCountQueryRequest,
     MotifCountQueryResponse,
+    MotifQueryRequest,
+    MotifQueryResponse,
 )
 from ..commons import HostProviderRouterGlobalDep, provider_router
 
@@ -111,5 +113,33 @@ def query_count_motifs(
         query=motif_count_query_request.query,
         motif_count=count,
         host_name=motif_count_query_request.host_name,
+        response_time=datetime.datetime.now().isoformat(),
+    )
+
+
+@router.post("/motifs")
+def query_motifs(
+    motif_query_request: MotifCountQueryRequest,
+    commons: Annotated[HostProviderRouterGlobalDep, Depends(provider_router)],
+) -> MotifQueryResponse:
+    """
+    Get a count of the motifs for a given host.
+
+    """
+    uri = commons.get_uri_from_name(motif_query_request.host_name)
+    if uri is None:
+        raise HTTPException(status_code=404, detail=f"No host found with name {motif_query_request.host_name}")
+
+    provider = commons.host_provider_router.provider_for(uri)
+    if provider is None:
+        raise HTTPException(status_code=404, detail=f"No provider found for URI {uri}")
+
+    results = provider.get_motifs(uri, motif_query_request.query)
+    count = len(results)
+    return MotifQueryResponse(
+        query=motif_query_request.query,
+        motif_count=count,
+        motif_results=results,
+        host_name=motif_query_request.host_name,
         response_time=datetime.datetime.now().isoformat(),
     )

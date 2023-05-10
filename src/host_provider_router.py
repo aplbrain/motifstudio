@@ -52,6 +52,13 @@ class HostProvider(Protocol):
         """
         raise NotImplementedError()
 
+    def get_motifs(self, uri: str, motif_string: str) -> list[dict[str, str]]:
+        """
+        Return the motifs in the graph.
+
+        """
+        raise NotImplementedError()
+
 
 class GraphMLHostProvider(HostProvider):
     """
@@ -96,6 +103,16 @@ class GraphMLHostProvider(HostProvider):
         graph = self.get_networkx_graph(uri)
         executor = GrandIsoExecutor(graph=graph)
         return executor.count(motif)
+
+    def get_motifs(self, uri: str, motif_string: str) -> list[dict[str, str]]:
+        """
+        Return the motifs in the graph.
+
+        """
+        motif = Motif(motif_string)
+        graph = self.get_networkx_graph(uri)
+        executor = GrandIsoExecutor(graph=graph)
+        return executor.find(motif)
 
 
 class S3GraphMLHostProvider(GraphMLHostProvider):
