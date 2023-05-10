@@ -45,6 +45,13 @@ class HostProvider(Protocol):
         """
         raise NotImplementedError()
 
+    def get_motif_count(self, uri: str, motif_string: str) -> int:
+        """
+        Count the number of instances of a motif in the graph.
+
+        """
+        raise NotImplementedError()
+
 
 class GraphMLHostProvider(HostProvider):
     """

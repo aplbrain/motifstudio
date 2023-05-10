@@ -106,7 +106,7 @@ def query_count_motifs(
     if provider is None:
         raise HTTPException(status_code=404, detail=f"No provider found for URI {uri}")
 
-    count = provider.get_motif_count(uri)
+    count = provider.get_motif_count(uri, motif_count_query_request.query)
     return MotifCountQueryResponse(
         query=motif_count_query_request.query,
         motif_count=count,
