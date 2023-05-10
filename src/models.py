@@ -1,3 +1,5 @@
+import json
+from typing import Callable
 from pydantic import BaseModel, Field
 
 
@@ -18,7 +20,7 @@ class VertexCountQueryResponse(BaseModel):
     vertex_count: int
     host_name: str
     response_time: str
-    response_duration_sec: float
+    response_duration_ms: float
 
 
 class EdgeCountQueryRequest(BaseModel):
@@ -51,15 +53,6 @@ _HostVertexID = str
 _MotifResultsNonAggregated = list[dict[_MotifVertexID, _HostVertexID]]
 _MotifResultsAggregatedHostVertex = dict[_HostVertexID, dict[_MotifVertexID, int]]
 _MotifResultsAggregatedMotifVertexAttribute = dict[_MotifVertexID, dict[str, int]]
-
-
-class MotifAggregationType:
-    HostVertex = "host.vertex"
-    MotifVertexAttribute = "motif.vertex"
-
-    @classmethod
-    def explain_valid(cls) -> list[str]:
-        return [v for k, v in cls.__dict__.items() if not k.startswith("_") and isinstance(v, str)]
 
 
 class MotifQueryRequest(BaseModel):

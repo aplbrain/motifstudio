@@ -4,17 +4,18 @@ import networkx as nx
 import boto3
 from dotmotif import Motif, GrandIsoExecutor
 
-from .motif_results_aggregators import MotifResultsAggregator, MotifResultsHostVertexCountAggregator
+from .motif_results_aggregators import (
+    MotifAggregation,
+)
 from .models import (
     HostListing,
-    MotifAggregationType,
     _MotifResultsNonAggregated,
     _MotifResultsAggregatedHostVertex,
     _MotifResultsAggregatedMotifVertexAttribute,
 )
 
 
-class HostProvider(Protocol):
+class HostProvider:
     """
     A Host Provider is a class that can execute a motif query on a host network
     and return the results.
@@ -35,34 +36,6 @@ class HostProvider(Protocol):
 
         Accept calls should run quickly and do minimal work so that the router
         can quickly find the correct provider.
-
-        """
-        raise NotImplementedError()
-
-    def get_vertex_count(self, uri: str) -> int:
-        """
-        Return the number of vertices in the graph.
-
-        """
-        raise NotImplementedError()
-
-    def get_edge_count(self, uri: str) -> int:
-        """
-        Return the number of edges in the graph.
-
-        """
-        raise NotImplementedError()
-
-    def get_motif_count(self, uri: str, motif_string: str) -> int:
-        """
-        Count the number of instances of a motif in the graph.
-
-        """
-        raise NotImplementedError()
-
-    def get_motifs(self, uri: str, motif_string: str, aggregation_type: str | None = None) -> list[dict[str, str]]:
-        """
-        Return the motifs in the graph.
 
         """
         raise NotImplementedError()
@@ -123,18 +96,16 @@ class GraphMLHostProvider(HostProvider):
             motif = Motif(motif_string)
         except Exception as e:
             raise ValueError(f"Invalid motif: {motif_string}") from e
+
+        parsed_agg_args = MotifAggregation.parse_aggregation_args(aggregation_type or "")
+        aggregator = MotifAggregation.get_aggregator(aggregation_type or "")
+
         graph = self.get_networkx_graph(uri)
         executor = GrandIsoExecutor(graph=graph)
-        results = executor.find(motif)
-        if not aggregation_type:
-            return results
-        if aggregation_type == MotifAggregationType.HostVertex:
-            return MotifResultsHostVertexCountAggregator().aggregate(results)
-        # if aggregation_type == MotifAggregationType.MotifVertexAttribute:
-        # return MotifResultsMotifVertexAttributeAggregator().aggregate(results)
-        raise ValueError(
-            f"Unknown aggregation type: {aggregation_type}. Valid values are: {MotifAggregationType.explain_valid()}"
-        )
+        results = executor.find(motif, limit=parsed_agg_args.get("limit", None))
+        if aggregator is None:
+            raise ValueError(f"Invalid aggregation type: {aggregation_type}")
+        return aggregator(**parsed_agg_args).aggregate(results)
 
 
 class S3GraphMLHostProvider(GraphMLHostProvider):
