@@ -6,7 +6,16 @@ Routes that have to do with the actual graph queries.
 import datetime
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
-from ...models import VertexCountQueryRequest, VertexCountQueryResponse, EdgeCountQueryRequest, EdgeCountQueryResponse
+from ...models import (
+    VertexCountQueryRequest,
+    VertexCountQueryResponse,
+    EdgeCountQueryRequest,
+    EdgeCountQueryResponse,
+    MotifCountQueryRequest,
+    MotifCountQueryResponse,
+    MotifQueryRequest,
+    MotifQueryResponse,
+)
 from ..commons import HostProviderRouterGlobalDep, provider_router
 
 router = APIRouter(
@@ -78,5 +87,59 @@ def query_count_edges(
     return EdgeCountQueryResponse(
         edge_count=count,
         host_name=edge_count_query_request.host_name,
+        response_time=datetime.datetime.now().isoformat(),
+    )
+
+
+@router.post("/motifs/count")
+def query_count_motifs(
+    motif_count_query_request: MotifCountQueryRequest,
+    commons: Annotated[HostProviderRouterGlobalDep, Depends(provider_router)],
+) -> MotifCountQueryResponse:
+    """
+    Get a count of the motifs for a given host.
+
+    """
+    uri = commons.get_uri_from_name(motif_count_query_request.host_name)
+    if uri is None:
+        raise HTTPException(status_code=404, detail=f"No host found with name {motif_count_query_request.host_name}")
+
+    provider = commons.host_provider_router.provider_for(uri)
+    if provider is None:
+        raise HTTPException(status_code=404, detail=f"No provider found for URI {uri}")
+
+    count = provider.get_motif_count(uri, motif_count_query_request.query)
+    return MotifCountQueryResponse(
+        query=motif_count_query_request.query,
+        motif_count=count,
+        host_name=motif_count_query_request.host_name,
+        response_time=datetime.datetime.now().isoformat(),
+    )
+
+
+@router.post("/motifs")
+def query_motifs(
+    motif_query_request: MotifCountQueryRequest,
+    commons: Annotated[HostProviderRouterGlobalDep, Depends(provider_router)],
+) -> MotifQueryResponse:
+    """
+    Get a count of the motifs for a given host.
+
+    """
+    uri = commons.get_uri_from_name(motif_query_request.host_name)
+    if uri is None:
+        raise HTTPException(status_code=404, detail=f"No host found with name {motif_query_request.host_name}")
+
+    provider = commons.host_provider_router.provider_for(uri)
+    if provider is None:
+        raise HTTPException(status_code=404, detail=f"No provider found for URI {uri}")
+
+    results = provider.get_motifs(uri, motif_query_request.query)
+    count = len(results)
+    return MotifQueryResponse(
+        query=motif_query_request.query,
+        motif_count=count,
+        motif_results=results,
+        host_name=motif_query_request.host_name,
         response_time=datetime.datetime.now().isoformat(),
     )
