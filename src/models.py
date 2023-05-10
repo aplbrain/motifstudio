@@ -25,11 +25,23 @@ class VertexCountQueryResponse(BaseModel):
     response_time: str
 
 
+class EdgeCountQueryRequest(BaseModel):
+    host_name: str
+
+
 class EdgeCountQueryResponse(BaseModel):
     edge_count: int
     host_name: str
     response_time: str
 
 
-class EdgeCountQueryRequest(BaseModel):
+class MotifCountQueryRequest(BaseModel):
+    query: str
     host_name: str
+
+
+class MotifCountQueryResponse(BaseModel):
+    query: str
+    host_name: str
+    motif_count: int
+    response_time: str

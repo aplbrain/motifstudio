@@ -3,6 +3,7 @@ import tempfile
 from models import HostListing
 import networkx as nx
 import boto3
+from dotmotif import Motif, GrandIsoExecutor
 
 
 class HostProvider(Protocol):
@@ -78,6 +79,16 @@ class GraphMLHostProvider(HostProvider):
 
         """
         return len(self.get_networkx_graph(uri).edges)
+
+    def get_motif_count(self, uri: str, motif_string: str) -> int:
+        """
+        Count the number of instances of a motif in the graph.
+
+        """
+        motif = Motif(motif_string)
+        graph = self.get_networkx_graph(uri)
+        executor = GrandIsoExecutor(graph=graph)
+        return executor.count(motif)
 
 
 class S3GraphMLHostProvider(GraphMLHostProvider):
