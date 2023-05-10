@@ -2,7 +2,11 @@ import json
 from typing import Callable, Protocol, Any
 import random
 
-from .models import _MotifResultsNonAggregated, _MotifResultsAggregatedHostVertex
+from .models import (
+    _MotifResultsNonAggregated,
+    _MotifResultsAggregatedHostVertex,
+    _MotifResultsAggregatedMotifVertexAttribute,
+)
 
 
 class MotifResultsAggregator:
@@ -53,6 +57,23 @@ class MotifResultsHostVertexCountAggregator(MotifResultsAggregator):
                 host_verts[host_vertex_id].setdefault(motif_vertex_id, 0)
                 host_verts[host_vertex_id][motif_vertex_id] += 1
         return host_verts
+
+
+# class MotifResultsMotifVertexAttributeAggregator(MotifResultsAggregator):
+#     """
+#     An aggregator that keeps track of the attributes of the host vertices for
+#     each motif vertex. Useful for things like finding which cell type a motif
+#     vertex is most often assigned to in the host vertex.
+
+#     """
+
+#     def aggregate(self, results: _MotifResultsNonAggregated) -> _MotifResultsAggregatedMotifVertexAttribute:
+#         """
+#         Aggregate results, grouping on host vertex.
+#         """
+#         attr_map: _MotifResultsAggregatedMotifVertexAttribute = {}
+#         all_host_verts_for_attr =
+#         for motif_mapping in results:
 
 
 class MotifResultsSampleAggregator(MotifResultsAggregator):
@@ -115,8 +136,5 @@ class MotifAggregation:
 
 
 __all__ = [
-    "MotifResultsAggregator",
-    "MotifResultsHostVertexCountAggregator",
-    "MotifResultsSampleAggregator",
     "MotifAggregation",
 ]
