@@ -1,4 +1,4 @@
-from .host_provider_router import S3GraphMLHostProvider
+from .host_provider.router import S3GraphMLHostProvider
 
 
 def test_can_create_s3_provider():

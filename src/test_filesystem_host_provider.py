@@ -1,6 +1,6 @@
 import tempfile
 import networkx as nx
-from .host_provider_router import FilesystemGraphMLHostProvider
+from .host_provider.router import FilesystemGraphMLHostProvider
 
 
 def test_can_create_provider_from_path():

@@ -1,5 +1,16 @@
+"""
+Routes for host provider management.
+
+Host providers are the delegated components that handle IO with the host graphs
+listed in the server's configuration file. The server's host provider router
+routes queries to the appropriate provider based on the string URI of the host.
+
+"""
+
 from typing import Annotated
+
 from fastapi import APIRouter, Depends
+
 from ...models import HostProviderPublicListing
 from ..commons import HostProviderRouterGlobalDep, provider_router
 
@@ -32,3 +43,6 @@ def list_hosts(commons: Annotated[HostProviderRouterGlobalDep, Depends(provider_
 
     """
     return {"hosts": [host.name for host in commons.all_hosts]}
+
+
+__all__ = ["router"]

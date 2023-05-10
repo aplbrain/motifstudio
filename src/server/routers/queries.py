@@ -4,17 +4,20 @@ Routes that have to do with the actual graph queries.
 """
 
 import datetime
+import time
 from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException
+
 from ...models import (
-    VertexCountQueryRequest,
-    VertexCountQueryResponse,
     EdgeCountQueryRequest,
     EdgeCountQueryResponse,
     MotifCountQueryRequest,
     MotifCountQueryResponse,
     MotifQueryRequest,
     MotifQueryResponse,
+    VertexCountQueryRequest,
+    VertexCountQueryResponse,
 )
 from ..commons import HostProviderRouterGlobalDep, provider_router
 
@@ -50,6 +53,7 @@ def query_count_vertices(
     Get the vertex count for a given host.
 
     """
+    tic = time.time()
     uri = commons.get_uri_from_name(vertex_count_query_request.host_name)
     if uri is None:
         raise HTTPException(status_code=404, detail=f"No host found with name {vertex_count_query_request.host_name}")
@@ -63,6 +67,7 @@ def query_count_vertices(
         vertex_count=count,
         host_name=vertex_count_query_request.host_name,
         response_time=datetime.datetime.now().isoformat(),
+        response_duration_ms=(time.time() - tic) * 1000,
     )
 
 
@@ -75,6 +80,7 @@ def query_count_edges(
     Get a count of the edges for a given host.
 
     """
+    tic = time.time()
     uri = commons.get_uri_from_name(edge_count_query_request.host_name)
     if uri is None:
         raise HTTPException(status_code=404, detail=f"No host found with name {edge_count_query_request.host_name}")
@@ -88,6 +94,7 @@ def query_count_edges(
         edge_count=count,
         host_name=edge_count_query_request.host_name,
         response_time=datetime.datetime.now().isoformat(),
+        response_duration_ms=(time.time() - tic) * 1000,
     )
 
 
@@ -99,7 +106,10 @@ def query_count_motifs(
     """
     Get a count of the motifs for a given host.
 
+    This is the same as sending a motif query with the `count` aggregator.
+
     """
+    tic = time.time()
     uri = commons.get_uri_from_name(motif_count_query_request.host_name)
     if uri is None:
         raise HTTPException(status_code=404, detail=f"No host found with name {motif_count_query_request.host_name}")
@@ -114,18 +124,23 @@ def query_count_motifs(
         motif_count=count,
         host_name=motif_count_query_request.host_name,
         response_time=datetime.datetime.now().isoformat(),
+        response_duration_ms=(time.time() - tic) * 1000,
     )
 
 
 @router.post("/motifs")
 def query_motifs(
-    motif_query_request: MotifCountQueryRequest,
+    motif_query_request: MotifQueryRequest,
     commons: Annotated[HostProviderRouterGlobalDep, Depends(provider_router)],
 ) -> MotifQueryResponse:
     """
-    Get a count of the motifs for a given host.
+    Get a list of the motifs for a given host, and optionally process them
+    through an aggregator.
+
+    Aggregator functions are defined in `motif_results_aggregators.py`.
 
     """
+    tic = time.time()
     uri = commons.get_uri_from_name(motif_query_request.host_name)
     if uri is None:
         raise HTTPException(status_code=404, detail=f"No host found with name {motif_query_request.host_name}")
@@ -134,12 +149,22 @@ def query_motifs(
     if provider is None:
         raise HTTPException(status_code=404, detail=f"No provider found for URI {uri}")
 
-    results = provider.get_motifs(uri, motif_query_request.query)
+    try:
+        results = provider.get_motifs(
+            uri, motif_query_request.query, aggregation_type=motif_query_request.aggregation_type
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     count = len(results)
     return MotifQueryResponse(
         query=motif_query_request.query,
         motif_count=count,
         motif_results=results,
+        aggregation_type=motif_query_request.aggregation_type,
         host_name=motif_query_request.host_name,
         response_time=datetime.datetime.now().isoformat(),
+        response_duration_ms=(time.time() - tic) * 1000,
     )
+
+
+__all__ = ["router"]

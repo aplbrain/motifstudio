@@ -9,41 +9,15 @@ import datetime
 
 from fastapi import Depends, FastAPI
 
-from .routers import host_providers, queries
 from .commons import provider_router
+from .routers import host_providers, queries
 
 __version__ = "0.1.0"
-
-
-class Status:
-    """
-    Status codes for the API responses.
-
-    """
-
-    OK = "ok"
-    ERROR = "error"
 
 
 app = FastAPI()
 app.include_router(host_providers.router, dependencies=[Depends(provider_router)])
 app.include_router(queries.router, dependencies=[Depends(provider_router)])
-
-
-def _response_with_status(data: dict | None = None, status: str = Status.OK) -> dict:
-    """
-    Return a response with a status code and a data payload.
-
-    Arguments:
-        data (dict): The data payload to return. If none is provided, an empty
-            dictionary is returned.
-        status (str): The status code to return. Defaults to Status.OK.
-
-    Returns:
-        dict: The response dictionary.
-
-    """
-    return {"status": status, "server_time": datetime.datetime.now().isoformat(), "data": data or {}}
 
 
 @app.get("/")
@@ -60,7 +34,7 @@ def read_root():
         dict: The response dictionary.
 
     """
-    return _response_with_status({"server_version": __version__})
+    return {"server_time": datetime.datetime.now().isoformat(), "server_version": __version__}
 
 
 __all__ = ["app"]
