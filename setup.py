@@ -7,7 +7,7 @@ README = HERE.joinpath("README.md").read_text()
 REQUIREMENTS = HERE.joinpath("requirements", "requirements.in").read_text().split()
 
 setup(
-    name="pypk",
+    name="motifstudio",
     author="Jordan Matelsky",
     author_email="opensource@matelsky.com",
     description="",
