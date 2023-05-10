@@ -1,11 +1,10 @@
 import json
-from typing import Callable, Protocol, Any
+from typing import Callable, Any
 import random
 
 from .models import (
     _MotifResultsNonAggregated,
     _MotifResultsAggregatedHostVertex,
-    _MotifResultsAggregatedMotifVertexAttribute,
 )
 
 
@@ -30,13 +29,6 @@ class MotifResultsAggregator:
 
         """
         return results
-
-    def __call__(self, results: _MotifResultsNonAggregated) -> Any:
-        """
-        Aggregate the results.
-
-        """
-        return self.aggregate(results)
 
 
 class MotifResultsHostVertexCountAggregator(MotifResultsAggregator):
@@ -122,7 +114,7 @@ class MotifAggregation:
         return json.loads("|".join(aggr_args[1:]))
 
     @classmethod
-    def get_aggregator(cls, aggregator_string: str) -> Callable:
+    def get_aggregator(cls, aggregator_string: str) -> Callable | None:
         if "|" in aggregator_string:
             aggregator_string = aggregator_string.split("|")[0].strip()
         if aggregator_string in [None, ""]:

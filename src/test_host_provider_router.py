@@ -1,7 +1,7 @@
 import tempfile
 from models import HostListing
 import networkx as nx
-from .host_provider_router import HostProviderRouter, S3GraphMLHostProvider, FilesystemGraphMLHostProvider
+from .host_provider.router import HostProviderRouter, S3GraphMLHostProvider, FilesystemGraphMLHostProvider
 
 
 def test_can_create_empty_router():

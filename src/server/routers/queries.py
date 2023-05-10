@@ -6,16 +6,18 @@ Routes that have to do with the actual graph queries.
 import datetime
 import time
 from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException
+
 from ...models import (
-    VertexCountQueryRequest,
-    VertexCountQueryResponse,
     EdgeCountQueryRequest,
     EdgeCountQueryResponse,
     MotifCountQueryRequest,
     MotifCountQueryResponse,
     MotifQueryRequest,
     MotifQueryResponse,
+    VertexCountQueryRequest,
+    VertexCountQueryResponse,
 )
 from ..commons import HostProviderRouterGlobalDep, provider_router
 
@@ -104,6 +106,8 @@ def query_count_motifs(
     """
     Get a count of the motifs for a given host.
 
+    This is the same as sending a motif query with the `count` aggregator.
+
     """
     tic = time.time()
     uri = commons.get_uri_from_name(motif_count_query_request.host_name)
@@ -130,7 +134,10 @@ def query_motifs(
     commons: Annotated[HostProviderRouterGlobalDep, Depends(provider_router)],
 ) -> MotifQueryResponse:
     """
-    Get a count of the motifs for a given host.
+    Get a list of the motifs for a given host, and optionally process them
+    through an aggregator.
+
+    Aggregator functions are defined in `motif_results_aggregators.py`.
 
     """
     tic = time.time()
