@@ -1,4 +1,6 @@
-<h1 align=center>Motif Studio</h1>
+<h1 align=center>
+<img src='https://github.com/aplbrain/motifstudio-server/assets/693511/30a42349-c794-4a32-88c5-c96cae449936' alt="Motif Studio" width=600 />
+</h1>
 <p align=center>Motif Studio is a browser-based tool for querying connectomes with the <a href="https://github.com/aplbrain/dotmotif">DotMotif</a> motif query language.</p>
 
 > **Note**: Motif Studio is compatible with Python 3.10 or later.
