@@ -1,0 +1,18 @@
+{
+    "hosts": [
+        {
+            "name": "Witvliet 1",
+            "uri": "file:///graphs/Witvliet_attributed_1.graphml"
+        },
+        {
+            "name": "Witvliet 2",
+            "uri": "file:///graphs/Witvliet_attributed_2.graphml"
+        }
+    ],
+    "providers": [
+        {
+            "type": "FilesystemGraphMLHostProvider",
+            "arguments": {}
+        }
+    ]
+}
