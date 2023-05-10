@@ -32,3 +32,6 @@ def list_hosts(commons: Annotated[HostProviderRouterGlobalDep, Depends(provider_
 
     """
     return {"hosts": [host.name for host in commons.all_hosts]}
+
+
+__all__ = ["router"]

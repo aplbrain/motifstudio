@@ -1,9 +1,17 @@
 from typing import Protocol
 import tempfile
-from models import HostListing
 import networkx as nx
 import boto3
 from dotmotif import Motif, GrandIsoExecutor
+
+from .motif_results_aggregators import MotifResultsAggregator, MotifResultsHostVertexCountAggregator
+from .models import (
+    HostListing,
+    MotifAggregationType,
+    _MotifResultsNonAggregated,
+    _MotifResultsAggregatedHostVertex,
+    _MotifResultsAggregatedMotifVertexAttribute,
+)
 
 
 class HostProvider(Protocol):
@@ -52,7 +60,7 @@ class HostProvider(Protocol):
         """
         raise NotImplementedError()
 
-    def get_motifs(self, uri: str, motif_string: str) -> list[dict[str, str]]:
+    def get_motifs(self, uri: str, motif_string: str, aggregation_type: str | None = None) -> list[dict[str, str]]:
         """
         Return the motifs in the graph.
 
@@ -104,15 +112,29 @@ class GraphMLHostProvider(HostProvider):
         executor = GrandIsoExecutor(graph=graph)
         return executor.count(motif)
 
-    def get_motifs(self, uri: str, motif_string: str) -> list[dict[str, str]]:
+    def get_motifs(
+        self, uri: str, motif_string: str, aggregation_type: str | None = None
+    ) -> _MotifResultsNonAggregated | _MotifResultsAggregatedHostVertex | _MotifResultsAggregatedMotifVertexAttribute:
         """
         Return the motifs in the graph.
 
         """
-        motif = Motif(motif_string)
+        try:
+            motif = Motif(motif_string)
+        except Exception as e:
+            raise ValueError(f"Invalid motif: {motif_string}") from e
         graph = self.get_networkx_graph(uri)
         executor = GrandIsoExecutor(graph=graph)
-        return executor.find(motif)
+        results = executor.find(motif)
+        if not aggregation_type:
+            return results
+        if aggregation_type == MotifAggregationType.HostVertex:
+            return MotifResultsHostVertexCountAggregator().aggregate(results)
+        # if aggregation_type == MotifAggregationType.MotifVertexAttribute:
+        # return MotifResultsMotifVertexAttributeAggregator().aggregate(results)
+        raise ValueError(
+            f"Unknown aggregation type: {aggregation_type}. Valid values are: {MotifAggregationType.explain_valid()}"
+        )
 
 
 class S3GraphMLHostProvider(GraphMLHostProvider):

@@ -2,8 +2,7 @@ import json
 from functools import lru_cache
 from pathlib import Path
 
-from host_provider_router import (
-    FilesystemGraphMLHostProvider,
+from ..host_provider_router import (
     HostProvider,
     HostProviderRouter,
     provider_name_map,
