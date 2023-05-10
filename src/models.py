@@ -8,7 +8,6 @@ class MotifSearchQueryRequest(BaseModel):
 
 class HostProviderPublicListing(BaseModel):
     provider_type: str
-    provider_uri: str
 
 
 class HostListing(BaseModel):

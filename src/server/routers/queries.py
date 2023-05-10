@@ -7,21 +7,19 @@ import datetime
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from ...models import VertexCountQueryRequest, VertexCountQueryResponse, EdgeCountQueryRequest, EdgeCountQueryResponse
-from ..commons import HostProviderRouterGlobalDep
+from ..commons import HostProviderRouterGlobalDep, provider_router
 
 router = APIRouter(
     prefix="/queries",
     tags=["queries"],
     dependencies=[
-        Depends(HostProviderRouterGlobalDep),
+        Depends(provider_router),
     ],
 )
 
 
 @router.get("/")
-def query_index(
-    commons: Annotated[HostProviderRouterGlobalDep, Depends(HostProviderRouterGlobalDep)]
-) -> dict[str, list[str]]:
+def query_index(commons: Annotated[HostProviderRouterGlobalDep, Depends(provider_router)]) -> dict[str, list[str]]:
     """
     Get the root endpoint for the queries API.
 
@@ -37,7 +35,7 @@ def query_index(
 @router.post("/vertices/count")
 def query_count_vertices(
     vertex_count_query_request: VertexCountQueryRequest,
-    commons: Annotated[HostProviderRouterGlobalDep, Depends(HostProviderRouterGlobalDep)],
+    commons: Annotated[HostProviderRouterGlobalDep, Depends(provider_router)],
 ) -> VertexCountQueryResponse:
     """
     Get the vertex count for a given host.
@@ -62,7 +60,7 @@ def query_count_vertices(
 @router.post("/edges/count")
 def query_count_edges(
     edge_count_query_request: EdgeCountQueryRequest,
-    commons: Annotated[HostProviderRouterGlobalDep, Depends(HostProviderRouterGlobalDep)],
+    commons: Annotated[HostProviderRouterGlobalDep, Depends(provider_router)],
 ) -> EdgeCountQueryResponse:
     """
     Get a count of the edges for a given host.

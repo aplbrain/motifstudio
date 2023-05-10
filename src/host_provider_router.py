@@ -12,6 +12,14 @@ class HostProvider(Protocol):
 
     """
 
+    @property
+    def type(self) -> str:
+        """
+        Return the type of the provider.
+
+        """
+        raise NotImplementedError()
+
     def accepts(self, uri: str) -> bool:
         """
         Return True if this provider can handle the URI.
@@ -82,6 +90,14 @@ class S3GraphMLHostProvider(GraphMLHostProvider):
         self.bucket = bucket
         self.s3_client = s3_client or boto3.client("s3")
 
+    @property
+    def type(self) -> str:
+        """
+        Return the type of the provider.
+
+        """
+        return "S3GraphMLHostProvider"
+
     def accepts(self, uri: str) -> bool:
         """
         Return True if the URI is an S3 URI.
@@ -106,6 +122,14 @@ class FilesystemGraphMLHostProvider(GraphMLHostProvider):
 
     def __init__(self, root: str = "/"):
         self.root = root
+
+    @property
+    def type(self) -> str:
+        """
+        Return the type of the provider.
+
+        """
+        return "FilesystemGraphMLHostProvider"
 
     def accepts(self, uri: str) -> bool:
         """
@@ -143,9 +167,23 @@ class HostProviderRouter:
         """
         self._providers.append(provider)
 
+    def all_providers(self) -> list[HostProvider]:
+        """
+        Return a list of all providers.
+
+        """
+        return self._providers
+
     def provider_for(self, uri: str) -> HostProvider | None:
         """
         Return the first provider that accepts the URI.
+
+        Arguments:
+            uri: A string URI.
+
+        Returns:
+            The first provider that accepts the URI, or None if no provider
+            accepts the URI.
 
         """
         for provider in self._providers:
@@ -164,14 +202,12 @@ class HostProviderRouter:
             A list of booleans indicating whether each host is valid.
 
         """
-        return [
-            self.provider_for(host.uri if isinstance(host, HostListing) else host) is not None for host in host_uris
-        ]
+        return [self.provider_for((host if isinstance(host, str) else host.uri)) is not None for host in host_uris]
 
 
 provider_name_map = {
-    "s3graphml": S3GraphMLHostProvider,
-    "fsgraphml": FilesystemGraphMLHostProvider,
+    "FilesystemGraphMLHostProvider": FilesystemGraphMLHostProvider,
+    "S3GraphMLHostProvider": S3GraphMLHostProvider,
 }
 
 __all__ = [
