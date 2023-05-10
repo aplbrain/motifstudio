@@ -18,3 +18,35 @@ pip install -r requirements/dev-requirements.in
 ```
 
 ## Configuring the Server
+
+The server is configured using a `config.json` file in `src/server`. An example configuration file is provided in `src/server/config.example.json`.
+
+## Running the Server
+
+To run the server in "development" mode, run:
+
+```bash
+uvicorn src.server:app --reload
+```
+
+To run the server in "production" mode, run:
+
+```bash
+uvicorn src.server:app
+```
+
+## Running the Tests
+
+To run the tests in "development" watch mode, run:
+
+```bash
+ptw
+```
+
+This will run the test suite and then wait for changes to the codebase. When changes are detected, the test suite will be run again.
+
+To run the tests once, run:
+
+```bash
+pytest
+```
