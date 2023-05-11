@@ -1,5 +1,3 @@
-import json
-from typing import Callable
 from pydantic import BaseModel, Field
 
 
@@ -52,7 +50,15 @@ _MotifVertexID = str
 _HostVertexID = str
 _MotifResultsNonAggregated = list[dict[_MotifVertexID, _HostVertexID]]
 _MotifResultsAggregatedHostVertex = dict[_HostVertexID, dict[_MotifVertexID, int]]
+_MotifResultsAggregatedMotifVertex = dict[_MotifVertexID, dict[_HostVertexID, int]]
 _MotifResultsAggregatedMotifVertexAttribute = dict[_MotifVertexID, dict[str, int]]
+
+PossibleMotifResultTypes = (
+    _MotifResultsNonAggregated
+    | _MotifResultsAggregatedHostVertex
+    | _MotifResultsAggregatedMotifVertexAttribute
+    | _MotifResultsAggregatedMotifVertex
+)
 
 
 class MotifQueryRequest(BaseModel):
@@ -62,31 +68,7 @@ class MotifQueryRequest(BaseModel):
     # specify the type of aggregation to use when returning results. If this
     # parameter is not specified, then no aggregation is performed and the
     # results are returned as-is. If this parameter is specified, then the
-    # results are aggregated according to the specified type. The following
-    # aggregation types are supported:
-    #
-    # - `host.vertex`: Returns a mapping of each host vertex and how many times
-    #   it was matched to each motif vertex:
-    #
-    #   ```
-    #   {
-    #     "H1": { "M1": 1, "M2": 2, "M3": 1 },
-    #     "H2": { "M1": 1, "M2": 1, "M3": 1 },
-    #     ...
-    #   }
-    #   ```
-    #
-    # - `motif.vertex(attribute)`: Returns a mapping of each motif vertex and
-    #   how many times it was matched to a host vertex of the specified
-    #   attribute:
-    #
-    #   ```
-    #   {
-    #     "M1": { "Host_Type1": 2, "Host_Type2": 1 },
-    #     "M2": { "Host_Type1": 2, "Host_Type7": 1, "Host_Type8": 1 },
-    #     ...
-    #   }
-    #   ```
+    # results are aggregated according to the specified type.
     aggregation_type: str | None = Field(
         None, description="The type of aggregation to perform on the results", optional=True
     )
@@ -97,6 +79,6 @@ class MotifQueryResponse(BaseModel):
     host_name: str
     motif_count: int
     aggregation_type: str | None
-    motif_results: _MotifResultsNonAggregated | _MotifResultsAggregatedHostVertex | _MotifResultsAggregatedMotifVertexAttribute
+    motif_results: PossibleMotifResultTypes
     response_time: str
     response_duration_ms: float

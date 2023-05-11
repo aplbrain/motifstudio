@@ -2,12 +2,8 @@ from typing import Protocol
 import networkx as nx
 from dotmotif import GrandIsoExecutor, Motif
 
-from ...models import (
-    _MotifResultsAggregatedHostVertex,
-    _MotifResultsAggregatedMotifVertexAttribute,
-    _MotifResultsNonAggregated,
-)
-from ...motif_results_aggregators import MotifAggregation
+from ...models import PossibleMotifResultTypes
+from ...aggregators import MotifAggregation
 
 
 class HostProvider(Protocol):
@@ -83,9 +79,7 @@ class HostProvider(Protocol):
         """
         ...
 
-    def get_motifs(
-        self, uri: str, motif_string: str, aggregation_type: str | None = None
-    ) -> _MotifResultsNonAggregated | _MotifResultsAggregatedHostVertex | _MotifResultsAggregatedMotifVertexAttribute:
+    def get_motifs(self, uri: str, motif_string: str, aggregation_type: str | None = None) -> PossibleMotifResultTypes:
         """
         Get the motifs in the graph.
 
@@ -98,11 +92,7 @@ class HostProvider(Protocol):
             aggregation_type (str): The aggregation to use.
 
         Returns:
-            (
-                _MotifResultsNonAggregated
-                | _MotifResultsAggregatedHostVertex
-                | _MotifResultsAggregatedMotifVertexAttribute
-            ): The results, optionally aggregated.
+            PossibleMotifResultTypes: The results, optionally aggregated.
 
         """
         ...
@@ -185,9 +175,7 @@ class GraphMLHostProvider(HostProvider):
         executor = GrandIsoExecutor(graph=graph)
         return executor.count(motif)
 
-    def get_motifs(
-        self, uri: str, motif_string: str, aggregation_type: str | None = None
-    ) -> _MotifResultsNonAggregated | _MotifResultsAggregatedHostVertex | _MotifResultsAggregatedMotifVertexAttribute:
+    def get_motifs(self, uri: str, motif_string: str, aggregation_type: str | None = None) -> PossibleMotifResultTypes:
         """
         Return the motifs in the graph.
 
@@ -200,11 +188,7 @@ class GraphMLHostProvider(HostProvider):
             aggregation_type (str): The aggregation to use.
 
         Returns:
-            (
-                _MotifResultsNonAggregated
-                | _MotifResultsAggregatedHostVertex
-                | _MotifResultsAggregatedMotifVertexAttribute
-            ): The results, optionally aggregated.
+            PossibleMotifResultTypes: The results, optionally aggregated.
 
         """
         # Try to parse the motif string, and raise a ValueError if it's invalid
@@ -233,7 +217,7 @@ class GraphMLHostProvider(HostProvider):
         # pre-processing arguments in the future, we will likely want to handle
         # them more explicitly.
         results = executor.find(motif, limit=parsed_agg_args.get("limit", None))
-        return aggregator(**parsed_agg_args).aggregate(results, self)
+        return aggregator(**parsed_agg_args).aggregate(results)
 
 
 __all__ = [
