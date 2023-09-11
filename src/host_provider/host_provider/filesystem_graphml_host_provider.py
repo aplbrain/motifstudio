@@ -31,4 +31,4 @@ class FilesystemGraphMLHostProvider(GraphMLHostProvider):
         # Save the graph to a temporary file, then read it back in.
         # This is a workaround for NetworkX, which prevents reading from a
         # file-like object.
-        return super().get_networkx_graph(uri[len(f"file://") :])
+        return super().get_networkx_graph(uri[len("file://") :])

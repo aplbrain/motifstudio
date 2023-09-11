@@ -1,0 +1,39 @@
+# GitHub action to test the Python library.
+
+name: Test Python Backend
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+        branches: [main]
+
+jobs:
+    ruff:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+            - uses: chartboost/ruff-action@v1
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v2
+            - name: Set up Python 3.10
+              uses: actions/setup-python@v2
+              with:
+                  python-version: "3.10"
+            - name: Install dependencies
+              run: |
+                  python -m pip install --upgrade pip
+                  pip install -r requirements/requirements.in
+            - name: Lint with flake8
+              run: |
+                  pip install flake8
+                  # stop the build if there are Python syntax errors or undefined names
+                  flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+                  # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+                  flake8 . --count --exit-zero --max-line-length=127 --statistics
+            - name: Test with pytest
+              run: |
+                  pip install pytest
+                  pytest

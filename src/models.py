@@ -1,6 +1,16 @@
 from pydantic import BaseModel, Field
 
 
+class _QueryRequestBase(BaseModel):
+    host_name: str = Field(..., description="The name of the host graph to query")
+
+
+class _QueryResponseBase(BaseModel):
+    response_time: str
+    response_duration_ms: float
+    host_name: str
+
+
 class HostProviderPublicListing(BaseModel):
     provider_type: str = Field(..., description="The type of the host provider (i.e., the name of the provider class.)")
 
@@ -10,39 +20,29 @@ class HostListing(BaseModel):
     name: str
 
 
-class VertexCountQueryRequest(BaseModel):
-    host_name: str = Field(..., description="The name of the host graph to query")
+class VertexCountQueryRequest(_QueryRequestBase):
+    ...
 
 
-class VertexCountQueryResponse(BaseModel):
+class VertexCountQueryResponse(_QueryResponseBase):
     vertex_count: int
-    host_name: str
-    response_time: str
-    response_duration_ms: float
 
 
-class EdgeCountQueryRequest(BaseModel):
-    host_name: str = Field(..., description="The name of the host graph to query")
+class EdgeCountQueryRequest(_QueryRequestBase):
+    ...
 
 
-class EdgeCountQueryResponse(BaseModel):
+class EdgeCountQueryResponse(_QueryResponseBase):
     edge_count: int
-    host_name: str
-    response_time: str
-    response_duration_ms: float
 
 
-class MotifCountQueryRequest(BaseModel):
+class MotifCountQueryRequest(_QueryRequestBase):
     query: str = Field(..., description="The motif query to execute, in the DotMotif query language")
-    host_name: str = Field(..., description="The name of the host graph to query")
 
 
-class MotifCountQueryResponse(BaseModel):
+class MotifCountQueryResponse(_QueryResponseBase):
     query: str
-    host_name: str
     motif_count: int
-    response_time: str
-    response_duration_ms: float
 
 
 # Type alias:
@@ -74,11 +74,8 @@ class MotifQueryRequest(BaseModel):
     )
 
 
-class MotifQueryResponse(BaseModel):
+class MotifQueryResponse(_QueryResponseBase):
     query: str
-    host_name: str
     motif_count: int
     aggregation_type: str | None
     motif_results: PossibleMotifResultTypes
-    response_time: str
-    response_duration_ms: float
