@@ -1,9 +1,9 @@
 from typing import Protocol
-import networkx as nx
 from dotmotif import GrandIsoExecutor, Motif
+import networkx as nx
 
-from ...models import PossibleMotifResultTypes
 from ...aggregators import MotifAggregation
+from ...models import PossibleMotifResultTypes, AttributeSchema
 
 
 class HostProvider(Protocol):
@@ -53,6 +53,19 @@ class HostProvider(Protocol):
         """
         ...
 
+    def get_vertex_attribute_schema(self, uri: str) -> AttributeSchema:
+        """
+        Return the schema of the vertex attributes in the graph.
+
+        Arguments:
+            uri (str): The URI of the host.
+
+        Returns:
+            dict[str, str]: The schema of the vertex attributes in the graph.
+
+        """
+        ...
+
     def get_edge_count(self, uri: str) -> int:
         """
         Return the number of edges in the graph.
@@ -79,7 +92,9 @@ class HostProvider(Protocol):
         """
         ...
 
-    def get_motifs(self, uri: str, motif_string: str, aggregation_type: str | None = None) -> PossibleMotifResultTypes:
+    def get_motifs(
+        self, uri: str, motif_string: str, aggregation_type: str | None = None
+    ) -> PossibleMotifResultTypes:
         """
         Get the motifs in the graph.
 
@@ -98,39 +113,9 @@ class HostProvider(Protocol):
         ...
 
 
-class GraphMLHostProvider(HostProvider):
-    """
-    A Host Provider that can handle local filesystem URIs and load GraphML
-    files (either uncompressed or compressed with gzip).
-
-    """
-
-    def accepts(self, uri: str) -> bool:
-        """
-        Return True if the URI is a local filesystem URI.
-
-        Arguments:
-            uri (str): The URI to check.
-
-        Returns:
-            bool: True if the URI is a local filesystem URI GraphML file that
-                ends with .graphml, .graphml.gz, or .gml.
-
-        """
-        return uri.endswith(".graphml") or uri.endswith(".graphml.gz") or uri.endswith(".gml")
-
+class NetworkXHostProvider(HostProvider):
     def get_networkx_graph(self, uri: str) -> nx.Graph:
-        """
-        Return a NetworkX graph for the URI.
-
-        Arguments:
-            uri (str): The URI of the host.
-
-        Returns:
-            nx.Graph: The NetworkX graph.
-
-        """
-        return nx.read_graphml(uri)  # type: ignore
+        raise NotImplementedError("This method must be implemented by a subclass.")
 
     def get_vertex_count(self, uri: str) -> int:
         """
@@ -144,6 +129,35 @@ class GraphMLHostProvider(HostProvider):
 
         """
         return len(self.get_networkx_graph(uri).nodes)
+
+    def get_vertex_attribute_schema(self, uri: str) -> dict[str, str]:
+        """
+        Return the schema of the vertex attributes in the graph.
+
+        Arguments:
+            uri (str): The URI of the host.
+
+        Returns:
+            dict[str, str]: The schema of the vertex attributes in the graph.
+
+        """
+        g = self.get_networkx_graph(uri)
+        # TODO: This exhaustive search is no good for very large graphs.
+
+        # Detect types of attributes, which may be different for different
+        # vertices.
+        attribute_types = {}
+        for node in g.nodes:
+            for attribute in g.nodes[node].keys():
+                if attribute not in attribute_types:
+                    attribute_types[attribute] = type(g.nodes[node][attribute]).__name__
+                else:
+                    if (
+                        attribute_types[attribute]
+                        != type(g.nodes[node][attribute]).__name__
+                    ):
+                        attribute_types[attribute] = "str"
+        return attribute_types
 
     def get_edge_count(self, uri: str) -> int:
         """
@@ -175,7 +189,9 @@ class GraphMLHostProvider(HostProvider):
         executor = GrandIsoExecutor(graph=graph)
         return executor.count(motif)
 
-    def get_motifs(self, uri: str, motif_string: str, aggregation_type: str | None = None) -> PossibleMotifResultTypes:
+    def get_motifs(
+        self, uri: str, motif_string: str, aggregation_type: str | None = None
+    ) -> PossibleMotifResultTypes:
         """
         Return the motifs in the graph.
 
@@ -204,7 +220,9 @@ class GraphMLHostProvider(HostProvider):
         # are in JSON format after a | delimiting character, and if they're not
         # provided, we'll use an empty dictionary.
         # All agg calls take kwargs in their constructor.
-        parsed_agg_args = MotifAggregation.parse_aggregation_args(aggregation_type or "")
+        parsed_agg_args = MotifAggregation.parse_aggregation_args(
+            aggregation_type or ""
+        )
         aggregator = MotifAggregation.get_aggregator(aggregation_type or "")
         # Fail fast:
         if aggregator is None:
@@ -222,5 +240,4 @@ class GraphMLHostProvider(HostProvider):
 
 __all__ = [
     "HostProvider",
-    "GraphMLHostProvider",
 ]

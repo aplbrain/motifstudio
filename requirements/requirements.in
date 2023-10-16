@@ -2,3 +2,4 @@ boto3
 fastapi[all]
 uvicorn[standard]
 dotmotif[neo4j]
+git+https://github.com/aplbrain/grand-cypher-io

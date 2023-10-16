@@ -18,6 +18,8 @@ from ...models import (
     MotifQueryResponse,
     VertexCountQueryRequest,
     VertexCountQueryResponse,
+    VertexAttributeQueryRequest,
+    VertexAttributeQueryResponse,
 )
 from ..commons import HostProviderRouterGlobalDep, provider_router
 
@@ -31,7 +33,9 @@ router = APIRouter(
 
 
 @router.get("/")
-def query_index(commons: Annotated[HostProviderRouterGlobalDep, Depends(provider_router)]) -> dict[str, list[str]]:
+def query_index(
+    commons: Annotated[HostProviderRouterGlobalDep, Depends(provider_router)]
+) -> dict[str, list[str]]:
     """
     Get the root endpoint for the queries API.
 
@@ -56,16 +60,55 @@ def query_count_vertices(
     tic = time.time()
     uri = commons.get_uri_from_name(vertex_count_query_request.host_name)
     if uri is None:
-        raise HTTPException(status_code=404, detail=f"No host found with name {vertex_count_query_request.host_name}")
+        raise HTTPException(
+            status_code=404,
+            detail=f"No host found with name {vertex_count_query_request.host_name}",
+        )
 
     provider = commons.host_provider_router.provider_for(uri)
     if provider is None:
-        raise HTTPException(status_code=404, detail=f"No provider found for URI {uri}")
+        raise HTTPException(
+            status_code=404,
+            detail=f"No provider found for host {vertex_count_query_request.host_name}",
+        )
 
     count = provider.get_vertex_count(uri)
     return VertexCountQueryResponse(
         vertex_count=count,
         host_name=vertex_count_query_request.host_name,
+        response_time=datetime.datetime.now().isoformat(),
+        response_duration_ms=(time.time() - tic) * 1000,
+    )
+
+
+@router.post("/vertices/attributes")
+def query_vertex_attributes(
+    vertex_attribute_query_request: VertexAttributeQueryRequest,
+    commons: Annotated[HostProviderRouterGlobalDep, Depends(provider_router)],
+) -> VertexAttributeQueryResponse:
+    """
+    Get the vertex attributes for a given host.
+
+    """
+    tic = time.time()
+    uri = commons.get_uri_from_name(vertex_attribute_query_request.host_name)
+    if uri is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No host found with name {vertex_attribute_query_request.host_name}",
+        )
+
+    provider = commons.host_provider_router.provider_for(uri)
+    if provider is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No provider found for host {vertex_attribute_query_request.host_name}",
+        )
+
+    attributes = provider.get_vertex_attribute_schema(uri)
+    return VertexAttributeQueryResponse(
+        attributes=attributes,
+        host_name=vertex_attribute_query_request.host_name,
         response_time=datetime.datetime.now().isoformat(),
         response_duration_ms=(time.time() - tic) * 1000,
     )
@@ -83,11 +126,17 @@ def query_count_edges(
     tic = time.time()
     uri = commons.get_uri_from_name(edge_count_query_request.host_name)
     if uri is None:
-        raise HTTPException(status_code=404, detail=f"No host found with name {edge_count_query_request.host_name}")
+        raise HTTPException(
+            status_code=404,
+            detail=f"No host found with name {edge_count_query_request.host_name}",
+        )
 
     provider = commons.host_provider_router.provider_for(uri)
     if provider is None:
-        raise HTTPException(status_code=404, detail=f"No provider found for URI {uri}")
+        raise HTTPException(
+            status_code=404,
+            detail=f"No provider found for host {edge_count_query_request.host_name}",
+        )
 
     count = provider.get_edge_count(uri)
     return EdgeCountQueryResponse(
@@ -112,11 +161,17 @@ def query_count_motifs(
     tic = time.time()
     uri = commons.get_uri_from_name(motif_count_query_request.host_name)
     if uri is None:
-        raise HTTPException(status_code=404, detail=f"No host found with name {motif_count_query_request.host_name}")
+        raise HTTPException(
+            status_code=404,
+            detail=f"No host found with name {motif_count_query_request.host_name}",
+        )
 
     provider = commons.host_provider_router.provider_for(uri)
     if provider is None:
-        raise HTTPException(status_code=404, detail=f"No provider found for URI {uri}")
+        raise HTTPException(
+            status_code=404,
+            detail=f"No provider found for host {motif_count_query_request.host_name}",
+        )
 
     count = provider.get_motif_count(uri, motif_count_query_request.query)
     return MotifCountQueryResponse(
@@ -143,15 +198,23 @@ def query_motifs(
     tic = time.time()
     uri = commons.get_uri_from_name(motif_query_request.host_name)
     if uri is None:
-        raise HTTPException(status_code=404, detail=f"No host found with name {motif_query_request.host_name}")
+        raise HTTPException(
+            status_code=404,
+            detail=f"No host found with name {motif_query_request.host_name}",
+        )
 
     provider = commons.host_provider_router.provider_for(uri)
     if provider is None:
-        raise HTTPException(status_code=404, detail=f"No provider found for URI {uri}")
+        raise HTTPException(
+            status_code=404,
+            detail=f"No provider found for host {motif_query_request.host_name}",
+        )
 
     try:
         results = provider.get_motifs(
-            uri, motif_query_request.query, aggregation_type=motif_query_request.aggregation_type
+            uri,
+            motif_query_request.query,
+            aggregation_type=motif_query_request.aggregation_type,
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

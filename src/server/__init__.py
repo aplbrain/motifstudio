@@ -34,7 +34,10 @@ def read_root():
         dict: The response dictionary.
 
     """
-    return {"server_time": datetime.datetime.now().isoformat(), "server_version": __version__}
+    return {
+        "server_time": datetime.datetime.now().isoformat(),
+        "server_version": __version__,
+    }
 
 
 __all__ = ["app"]
