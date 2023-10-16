@@ -75,17 +75,11 @@ def test_can_validate_host_uris():
 
     """
     assert (
-        all(
-            HostProviderRouter([FilesystemGraphMLHostProvider()]).validate_all_hosts(
-                ["cheese:///tmp/foo.graphml"]
-            )
-        )
+        all(HostProviderRouter([FilesystemGraphMLHostProvider()]).validate_all_hosts(["cheese:///tmp/foo.graphml"]))
         is False
     ), "Should not validate cheese://"
     assert all(
-        HostProviderRouter([FilesystemGraphMLHostProvider()]).validate_all_hosts(
-            ["file:///tmp/foo.graphml"]
-        )
+        HostProviderRouter([FilesystemGraphMLHostProvider()]).validate_all_hosts(["file:///tmp/foo.graphml"])
     ), "Should successfully validate a list comprising only file://"
     assert (
         HostProviderRouter([FilesystemGraphMLHostProvider()]).validate_all_hosts(
@@ -103,23 +97,12 @@ def test_can_validate_hostlistings():
     invalid_host = HostListing(uri="cheese:///tmp/foo.graphml", name="Invalid Host")
     valid_host = HostListing(uri="file:///tmp/foo.graphml", name="Valid Host")
     assert (
-        all(
-            HostProviderRouter([FilesystemGraphMLHostProvider()]).validate_all_hosts(
-                [invalid_host]
-            )
-        )
-        is False
+        all(HostProviderRouter([FilesystemGraphMLHostProvider()]).validate_all_hosts([invalid_host])) is False
     ), "Should not validate cheese://"
     assert all(
-        HostProviderRouter([FilesystemGraphMLHostProvider()]).validate_all_hosts(
-            [valid_host]
-        )
+        HostProviderRouter([FilesystemGraphMLHostProvider()]).validate_all_hosts([valid_host])
     ), "Should successfully validate a list comprising only file://"
-    assert (
-        HostProviderRouter([FilesystemGraphMLHostProvider()]).validate_all_hosts(
-            [valid_host, invalid_host]
-        )
-    ) == [
+    assert (HostProviderRouter([FilesystemGraphMLHostProvider()]).validate_all_hosts([valid_host, invalid_host])) == [
         True,
         False,
     ], "Should successfully validate a list comprising only file://"

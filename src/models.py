@@ -10,6 +10,7 @@ _MotifResultsAggregatedHostVertex = dict[_HostVertexID, dict[_MotifVertexID, int
 _MotifResultsAggregatedMotifVertex = dict[_MotifVertexID, dict[_HostVertexID, int]]
 _MotifResultsAggregatedMotifVertexAttribute = dict[_MotifVertexID, dict[str, int]]
 _AttributeType = Literal["str", "int", "float", "bool", "datetime.datetime"] | None
+_GraphFormats = Literal["graphml", "graphml.gz"] | None
 AttributeSchema = dict[str, _AttributeType]
 
 PossibleMotifResultTypes = (
@@ -102,3 +103,44 @@ class MotifQueryResponse(_QueryResponseBase):
     motif_count: int
     aggregation_type: str | None
     motif_results: PossibleMotifResultTypes
+
+
+class DownloadGraphQueryRequest(_QueryRequestBase):
+    """
+    A request to download a graph from a host provider.
+
+    """
+
+    format: _GraphFormats = Field(
+        None,
+        description=(
+            "The format to download the graph in. If not specified, "
+            "the default format for the host provider will be used."
+        ),
+        optional=True,
+    )
+
+
+class DownloadGraphQueryResponse(_QueryResponseBase):
+    """
+    A response to a request to download a graph from a host provider.
+
+    """
+
+    format: _GraphFormats = Field(
+        None,
+        description=(
+            "The format to download the graph in. If not specified, "
+            "the default format for the host provider will be used."
+        ),
+        optional=True,
+    )
+    graph: bytes = Field(
+        ...,
+        description="The graph, encoded in the specified format.",
+    )
+    error: str | None = Field(
+        None,
+        description="If an error occurred, a message describing the error.",
+        optional=True,
+    )

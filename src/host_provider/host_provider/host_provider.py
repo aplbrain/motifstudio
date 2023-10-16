@@ -92,9 +92,7 @@ class HostProvider(Protocol):
         """
         ...
 
-    def get_motifs(
-        self, uri: str, motif_string: str, aggregation_type: str | None = None
-    ) -> PossibleMotifResultTypes:
+    def get_motifs(self, uri: str, motif_string: str, aggregation_type: str | None = None) -> PossibleMotifResultTypes:
         """
         Get the motifs in the graph.
 
@@ -112,10 +110,30 @@ class HostProvider(Protocol):
         """
         ...
 
+    def maybe_get_networkx_graph(self, uri: str) -> tuple[nx.Graph | None, str]:
+        """
+        Return the networkx graph for the given URI, if possible.
+
+        Arguments:
+            uri (str): The URI of the host.
+
+        Returns:
+            nx.Graph: The networkx graph.
+            str: An error message.
+
+        """
+        return None, "This provider does not support networkx graphs."
+
 
 class NetworkXHostProvider(HostProvider):
     def get_networkx_graph(self, uri: str) -> nx.Graph:
         raise NotImplementedError("This method must be implemented by a subclass.")
+
+    def maybe_get_networkx_graph(self, uri: str) -> tuple[nx.Graph | None, str]:
+        try:
+            return self.get_networkx_graph(uri), ""
+        except Exception as e:
+            return None, str(e)
 
     def get_vertex_count(self, uri: str) -> int:
         """
@@ -152,10 +170,7 @@ class NetworkXHostProvider(HostProvider):
                 if attribute not in attribute_types:
                     attribute_types[attribute] = type(g.nodes[node][attribute]).__name__
                 else:
-                    if (
-                        attribute_types[attribute]
-                        != type(g.nodes[node][attribute]).__name__
-                    ):
+                    if attribute_types[attribute] != type(g.nodes[node][attribute]).__name__:
                         attribute_types[attribute] = "str"
         return attribute_types
 
@@ -189,9 +204,7 @@ class NetworkXHostProvider(HostProvider):
         executor = GrandIsoExecutor(graph=graph)
         return executor.count(motif)
 
-    def get_motifs(
-        self, uri: str, motif_string: str, aggregation_type: str | None = None
-    ) -> PossibleMotifResultTypes:
+    def get_motifs(self, uri: str, motif_string: str, aggregation_type: str | None = None) -> PossibleMotifResultTypes:
         """
         Return the motifs in the graph.
 
@@ -220,9 +233,7 @@ class NetworkXHostProvider(HostProvider):
         # are in JSON format after a | delimiting character, and if they're not
         # provided, we'll use an empty dictionary.
         # All agg calls take kwargs in their constructor.
-        parsed_agg_args = MotifAggregation.parse_aggregation_args(
-            aggregation_type or ""
-        )
+        parsed_agg_args = MotifAggregation.parse_aggregation_args(aggregation_type or "")
         aggregator = MotifAggregation.get_aggregator(aggregation_type or "")
         # Fail fast:
         if aggregator is None:

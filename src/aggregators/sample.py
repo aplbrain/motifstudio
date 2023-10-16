@@ -18,9 +18,7 @@ class MotifResultsSampleAggregator(MotifResultsAggregator):
         """
         self._limit: int = kwargs.get("limit", 1)
 
-    def aggregate(
-        self, results: _MotifResultsNonAggregated
-    ) -> _MotifResultsNonAggregated:
+    def aggregate(self, results: _MotifResultsNonAggregated) -> _MotifResultsNonAggregated:
         """
         Aggregate results, returning a random sample of the results.
 

@@ -34,7 +34,5 @@ class S3GraphMLHostProvider(GraphMLHostProvider):
         # This is a workaround for NetworkX, which prevents reading from a
         # file-like object.
         with tempfile.NamedTemporaryFile() as f:
-            self.s3_client.download_file(
-                self.bucket, uri[len(f"s3://{self.bucket}/") :], f.name
-            )
+            self.s3_client.download_file(self.bucket, uri[len(f"s3://{self.bucket}/") :], f.name)
             return super().get_networkx_graph(f.name)

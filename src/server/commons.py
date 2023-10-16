@@ -28,10 +28,7 @@ def _providers_from_json_config(providers: list[dict]) -> list[HostProvider]:
         list[HostProvider]: The list of configured host providers.
 
     """
-    return [
-        provider_name_map[provider["type"]](**provider["arguments"])
-        for provider in providers
-    ]
+    return [provider_name_map[provider["type"]](**provider["arguments"]) for provider in providers]
 
 
 def _hosts_from_json_config(hosts: list[dict]) -> list[HostListing]:
@@ -80,9 +77,7 @@ class HostProviderRouterGlobalDep:
             config = json.loads(json_filepath_or_dict.read_text())
         else:
             config = json_filepath_or_dict
-        self.host_provider_router = HostProviderRouter(
-            _providers_from_json_config(config["providers"])
-        )
+        self.host_provider_router = HostProviderRouter(_providers_from_json_config(config["providers"]))
         self.all_hosts = _hosts_from_json_config(config["hosts"])
         self.host_provider_router.validate_all_hosts(self.all_hosts)
 

@@ -21,11 +21,7 @@ class GraphMLHostProvider(NetworkXHostProvider):
                 ends with .graphml, .graphml.gz, or .gml.
 
         """
-        return (
-            uri.endswith(".graphml")
-            or uri.endswith(".graphml.gz")
-            or uri.endswith(".gml")
-        )
+        return uri.endswith(".graphml") or uri.endswith(".graphml.gz") or uri.endswith(".gml")
 
     def get_networkx_graph(self, uri: str) -> nx.Graph:
         """
