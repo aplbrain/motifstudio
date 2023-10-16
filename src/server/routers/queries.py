@@ -4,10 +4,12 @@ Routes that have to do with the actual graph queries.
 """
 
 import datetime
+import tempfile
 import time
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+import networkx as nx
+from fastapi import APIRouter, Depends, HTTPException, Header, Response
 
 from ...models import (
     EdgeCountQueryRequest,
@@ -20,6 +22,9 @@ from ...models import (
     VertexCountQueryResponse,
     VertexAttributeQueryRequest,
     VertexAttributeQueryResponse,
+    DownloadGraphQueryRequest,
+    DownloadGraphQueryResponse,
+    _GraphFormats,
 )
 from ..commons import HostProviderRouterGlobalDep, provider_router
 
@@ -33,9 +38,7 @@ router = APIRouter(
 
 
 @router.get("/")
-def query_index(
-    commons: Annotated[HostProviderRouterGlobalDep, Depends(provider_router)]
-) -> dict[str, list[str]]:
+def query_index(commons: Annotated[HostProviderRouterGlobalDep, Depends(provider_router)]) -> dict[str, list[str]]:
     """
     Get the root endpoint for the queries API.
 
@@ -46,6 +49,63 @@ def query_index(
     return {
         "queries": ["vertices", "edges", "motifs"],
     }
+
+
+@router.post("/graph/download")
+def query_graph_download(
+    graph_download_query_request: DownloadGraphQueryRequest,
+    # Accept-Type: application/json will return a JSON response; otherwise, it
+    # will return a binary response.
+    commons: Annotated[HostProviderRouterGlobalDep, Depends(provider_router)],
+    accept: str = Header(None),
+) -> DownloadGraphQueryResponse:
+    """
+    Get the root endpoint for the queries API.
+
+    Right now this is just a placeholder that gives a list of the available
+    queries under this endpoint prefix.
+
+    """
+    uri = commons.get_uri_from_name(graph_download_query_request.host_name)
+    if uri is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No host found with name {graph_download_query_request.host_name}",
+        )
+
+    provider = commons.host_provider_router.provider_for(uri)
+    if provider is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No provider found for host {graph_download_query_request.host_name}",
+        )
+    print(accept)
+
+    tic = time.time()
+    nx_graph, error_msg = provider.maybe_get_networkx_graph(uri)
+
+    def _get_bytes(graph, fmt: _GraphFormats):
+        # Create a temp file:
+        with tempfile.NamedTemporaryFile(suffix=f".{fmt}") as tmp:
+            nx.write_graphml(graph, tmp.name)
+            with open(tmp.name, "rb") as f:
+                return f.read()
+
+    if nx_graph is not None and accept != "application/json":
+        # Return the file as a binary response:
+        return Response(
+            content=_get_bytes(nx_graph, graph_download_query_request.format),
+            media_type=f"application/{graph_download_query_request.format}",
+        )  # type: ignore
+
+    return DownloadGraphQueryResponse(
+        host_name=graph_download_query_request.host_name,
+        format=graph_download_query_request.format,
+        graph=_get_bytes(nx_graph, graph_download_query_request.format) if nx_graph is not None else b"",
+        error=error_msg,
+        response_time=datetime.datetime.now().isoformat(),
+        response_duration_ms=(time.time() - tic) * 1000,
+    )
 
 
 @router.post("/vertices/count")

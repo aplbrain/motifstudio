@@ -13,9 +13,7 @@ class MotifResultsHostVertexCountAggregator(MotifResultsAggregator):
 
     """
 
-    def aggregate(
-        self, results: _MotifResultsNonAggregated
-    ) -> _MotifResultsAggregatedHostVertex:
+    def aggregate(self, results: _MotifResultsNonAggregated) -> _MotifResultsAggregatedHostVertex:
         """
         Aggregate results, grouping on host vertex.
         """
@@ -35,9 +33,7 @@ class MotifResultsMotifVertexCountAggregator(MotifResultsAggregator):
 
     """
 
-    def aggregate(
-        self, results: _MotifResultsNonAggregated
-    ) -> _MotifResultsAggregatedMotifVertex:
+    def aggregate(self, results: _MotifResultsNonAggregated) -> _MotifResultsAggregatedMotifVertex:
         """
         Aggregate results, grouping on motif vertex.
         """

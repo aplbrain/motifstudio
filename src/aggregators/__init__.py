@@ -44,11 +44,7 @@ class MotifAggregation:
 
     @classmethod
     def explain_valid(cls) -> list[str]:
-        return [
-            v
-            for k, v in cls.__dict__.items()
-            if not k.startswith("_") and isinstance(v, str)
-        ]
+        return [v for k, v in cls.__dict__.items() if not k.startswith("_") and isinstance(v, str)]
 
     @classmethod
     def parse_aggregation_args(cls, aggr_argument_string: str) -> dict:
