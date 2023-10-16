@@ -33,7 +33,7 @@ class _QueryResponseBase(BaseModel):
 class HostProviderPublicListing(BaseModel):
     provider_type: str = Field(
         ...,
-        description="The type of the host provider (i.e., the name of the provider class.)",
+        description="The type of the host provider (i.e., name of the provider class.)",
     )
 
 
@@ -69,7 +69,8 @@ class EdgeCountQueryResponse(_QueryResponseBase):
 
 class MotifCountQueryRequest(_QueryRequestBase):
     query: str = Field(
-        ..., description="The motif query to execute, in the DotMotif query language"
+        ...,
+        description="The motif query to execute, in the DotMotif query language",
     )
 
 
@@ -80,7 +81,8 @@ class MotifCountQueryResponse(_QueryResponseBase):
 
 class MotifQueryRequest(BaseModel):
     query: str = Field(
-        ..., description="The motif query to execute, in the DotMotif query language"
+        ...,
+        description="The motif query to execute, in the DotMotif query language",
     )
     host_name: str = Field(..., description="The name of the host graph to query")
     # Aggregator (`aggregator`) is an optional parameter that can be used to

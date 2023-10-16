@@ -11,6 +11,7 @@ profile = "black"
 
 [tool.ruff]
 fix = true
+line-length = 120
 
 [tool.ruff.pydocstyle]
 convention = "google"
