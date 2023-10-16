@@ -1,6 +1,6 @@
 import tempfile
 import boto3
-from .host_provider import GraphMLHostProvider
+from .GraphMLHostProvider import GraphMLHostProvider
 import networkx as nx
 
 

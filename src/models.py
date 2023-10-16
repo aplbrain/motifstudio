@@ -1,4 +1,23 @@
+from typing import Literal
 from pydantic import BaseModel, Field
+
+
+# Type alias:
+_MotifVertexID = str
+_HostVertexID = str
+_MotifResultsNonAggregated = list[dict[_MotifVertexID, _HostVertexID]]
+_MotifResultsAggregatedHostVertex = dict[_HostVertexID, dict[_MotifVertexID, int]]
+_MotifResultsAggregatedMotifVertex = dict[_MotifVertexID, dict[_HostVertexID, int]]
+_MotifResultsAggregatedMotifVertexAttribute = dict[_MotifVertexID, dict[str, int]]
+_AttributeType = Literal["str", "int", "float", "bool", "datetime.datetime"] | None
+AttributeSchema = dict[str, _AttributeType]
+
+PossibleMotifResultTypes = (
+    _MotifResultsNonAggregated
+    | _MotifResultsAggregatedHostVertex
+    | _MotifResultsAggregatedMotifVertexAttribute
+    | _MotifResultsAggregatedMotifVertex
+)
 
 
 class _QueryRequestBase(BaseModel):
@@ -28,6 +47,15 @@ class VertexCountQueryResponse(_QueryResponseBase):
     vertex_count: int
 
 
+class VertexAttributeQueryRequest(_QueryRequestBase):
+    ...
+
+
+class VertexAttributeQueryResponse(_QueryResponseBase):
+    # Attribute name to attribute schema:
+    attributes: AttributeSchema
+
+
 class EdgeCountQueryRequest(_QueryRequestBase):
     ...
 
@@ -43,22 +71,6 @@ class MotifCountQueryRequest(_QueryRequestBase):
 class MotifCountQueryResponse(_QueryResponseBase):
     query: str
     motif_count: int
-
-
-# Type alias:
-_MotifVertexID = str
-_HostVertexID = str
-_MotifResultsNonAggregated = list[dict[_MotifVertexID, _HostVertexID]]
-_MotifResultsAggregatedHostVertex = dict[_HostVertexID, dict[_MotifVertexID, int]]
-_MotifResultsAggregatedMotifVertex = dict[_MotifVertexID, dict[_HostVertexID, int]]
-_MotifResultsAggregatedMotifVertexAttribute = dict[_MotifVertexID, dict[str, int]]
-
-PossibleMotifResultTypes = (
-    _MotifResultsNonAggregated
-    | _MotifResultsAggregatedHostVertex
-    | _MotifResultsAggregatedMotifVertexAttribute
-    | _MotifResultsAggregatedMotifVertex
-)
 
 
 class MotifQueryRequest(BaseModel):
