@@ -16,7 +16,6 @@ class MotifResultsSampleAggregator(MotifResultsAggregator):
         Kwargs should include `limit`.
 
         """
-        print(kwargs)
         self._limit: int = kwargs.get("limit", 1)
 
     def aggregate(self, results: _MotifResultsNonAggregated) -> _MotifResultsNonAggregated:

@@ -2,7 +2,7 @@
 The Host Provider Router is a class that can route a query to the correct
 HostProvider.
 """
-from .host_provider import HostProvider, FilesystemGraphMLHostProvider, S3GraphMLHostProvider
+from .host_provider import HostProvider, FilesystemGraphMLHostProvider, S3GraphMLHostProvider, OpenCypherHostProvider
 
 from ..models import HostListing
 
@@ -69,6 +69,7 @@ class HostProviderRouter:
 provider_name_map = {
     "FilesystemGraphMLHostProvider": FilesystemGraphMLHostProvider,
     "S3GraphMLHostProvider": S3GraphMLHostProvider,
+    "OpenCypherHostProvider": OpenCypherHostProvider,
 }
 
 __all__ = [

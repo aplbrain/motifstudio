@@ -24,7 +24,6 @@ class FilesystemGraphMLHostProvider(GraphMLHostProvider):
         Return True if the URI is a local filesystem URI.
 
         """
-        print(uri, f"file://{self.root}")
         return uri.startswith(f"file://{self.root}") and super().accepts(uri)
 
     def get_networkx_graph(self, uri: str) -> nx.Graph:
