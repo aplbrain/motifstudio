@@ -2,7 +2,12 @@
 The Host Provider Router is a class that can route a query to the correct
 HostProvider.
 """
-from .host_provider import HostProvider, FilesystemGraphMLHostProvider, S3GraphMLHostProvider, OpenCypherHostProvider
+from .host_provider import (
+    HostProvider,
+    FilesystemGraphMLHostProvider,
+    S3GraphMLHostProvider,
+    OpenCypherHostProvider,
+)
 
 from ..models import HostListing
 
@@ -52,7 +57,9 @@ class HostProviderRouter:
                 return provider
         return None
 
-    def validate_all_hosts(self, host_uris: list[str] | list[HostListing]) -> list[bool]:
+    def validate_all_hosts(
+        self, host_uris: list[str] | list[HostListing]
+    ) -> list[bool]:
         """
         Return a list of booleans indicating whether each host is valid.
 
@@ -63,7 +70,10 @@ class HostProviderRouter:
             A list of booleans indicating whether each host is valid.
 
         """
-        return [self.provider_for((host if isinstance(host, str) else host.uri)) is not None for host in host_uris]
+        return [
+            self.provider_for((host if isinstance(host, str) else host.uri)) is not None
+            for host in host_uris
+        ]
 
 
 provider_name_map = {

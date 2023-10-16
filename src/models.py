@@ -31,7 +31,10 @@ class _QueryResponseBase(BaseModel):
 
 
 class HostProviderPublicListing(BaseModel):
-    provider_type: str = Field(..., description="The type of the host provider (i.e., the name of the provider class.)")
+    provider_type: str = Field(
+        ...,
+        description="The type of the host provider (i.e., the name of the provider class.)",
+    )
 
 
 class HostListing(BaseModel):
@@ -65,7 +68,9 @@ class EdgeCountQueryResponse(_QueryResponseBase):
 
 
 class MotifCountQueryRequest(_QueryRequestBase):
-    query: str = Field(..., description="The motif query to execute, in the DotMotif query language")
+    query: str = Field(
+        ..., description="The motif query to execute, in the DotMotif query language"
+    )
 
 
 class MotifCountQueryResponse(_QueryResponseBase):
@@ -74,7 +79,9 @@ class MotifCountQueryResponse(_QueryResponseBase):
 
 
 class MotifQueryRequest(BaseModel):
-    query: str = Field(..., description="The motif query to execute, in the DotMotif query language")
+    query: str = Field(
+        ..., description="The motif query to execute, in the DotMotif query language"
+    )
     host_name: str = Field(..., description="The name of the host graph to query")
     # Aggregator (`aggregator`) is an optional parameter that can be used to
     # specify the type of aggregation to use when returning results. If this
@@ -82,7 +89,9 @@ class MotifQueryRequest(BaseModel):
     # results are returned as-is. If this parameter is specified, then the
     # results are aggregated according to the specified type.
     aggregation_type: str | None = Field(
-        None, description="The type of aggregation to perform on the results", optional=True
+        None,
+        description="The type of aggregation to perform on the results",
+        optional=True,
     )
 
 
