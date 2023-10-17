@@ -1,3 +1,4 @@
+"""Models for the motif studio database and API."""
 from typing import Literal
 from pydantic import BaseModel, Field
 
@@ -32,6 +33,8 @@ class _QueryResponseBase(BaseModel):
 
 
 class HostProviderPublicListing(BaseModel):
+    """A public listing of a host provider, containing its type/class."""
+
     provider_type: str = Field(
         ...,
         description="The type of the host provider (i.e., name of the provider class.)",
@@ -39,36 +42,52 @@ class HostProviderPublicListing(BaseModel):
 
 
 class HostListing(BaseModel):
+    """A public listing of a host graph, containing its ID and provider."""
+
     uri: str
     name: str
 
 
 class VertexCountQueryRequest(_QueryRequestBase):
+    """A request to count the number of vertices in a host graph."""
+
     ...
 
 
 class VertexCountQueryResponse(_QueryResponseBase):
+    """A response with the vertex count results for a host graph."""
+
     vertex_count: int
 
 
 class VertexAttributeQueryRequest(_QueryRequestBase):
+    """A request to get the vertex attributes for a host graph."""
+
     ...
 
 
 class VertexAttributeQueryResponse(_QueryResponseBase):
+    """A response with the vertex attribute results for a host graph."""
+
     # Attribute name to attribute schema:
     attributes: AttributeSchema
 
 
 class EdgeCountQueryRequest(_QueryRequestBase):
+    """A request to count the number of edges in a host graph."""
+
     ...
 
 
 class EdgeCountQueryResponse(_QueryResponseBase):
+    """A response with the edge count results for a host graph."""
+
     edge_count: int
 
 
 class MotifCountQueryRequest(_QueryRequestBase):
+    """A request to count the number of motifs in a host graph."""
+
     query: str = Field(
         ...,
         description="The motif query to execute, in the DotMotif query language",
@@ -76,11 +95,15 @@ class MotifCountQueryRequest(_QueryRequestBase):
 
 
 class MotifCountQueryResponse(_QueryResponseBase):
+    """A response with the motif count results for a host graph."""
+
     query: str
     motif_count: int
 
 
 class MotifQueryRequest(BaseModel):
+    """A request to query a host graph for motifs."""
+
     query: str = Field(
         ...,
         description="The motif query to execute, in the DotMotif query language",
@@ -99,6 +122,12 @@ class MotifQueryRequest(BaseModel):
 
 
 class MotifQueryResponse(_QueryResponseBase):
+    """A response with the motif query results for a host graph.
+
+    Results are aggregated according to the `aggregator` parameter in the
+    request, if specified.
+    """
+
     query: str
     motif_count: int
     aggregation_type: str | None
@@ -106,10 +135,7 @@ class MotifQueryResponse(_QueryResponseBase):
 
 
 class DownloadGraphQueryRequest(_QueryRequestBase):
-    """
-    A request to download a graph from a host provider.
-
-    """
+    """A request to download a graph from a host provider."""
 
     format: _GraphFormats = Field(
         None,
@@ -122,10 +148,7 @@ class DownloadGraphQueryRequest(_QueryRequestBase):
 
 
 class DownloadGraphQueryResponse(_QueryResponseBase):
-    """
-    A response to a request to download a graph from a host provider.
-
-    """
+    """A response to a request to download a graph from a host provider."""
 
     format: _GraphFormats = Field(
         None,

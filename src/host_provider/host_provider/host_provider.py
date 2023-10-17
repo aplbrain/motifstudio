@@ -1,3 +1,5 @@
+"""Base HostProvider class and a NetworkX-backed implementation."""
+
 from typing import Protocol
 from dotmotif import GrandIsoExecutor, Motif
 import networkx as nx
@@ -7,16 +9,11 @@ from ...models import PossibleMotifResultTypes, AttributeSchema
 
 
 class HostProvider(Protocol):
-    """
-    A Host Provider is a class that can execute a query on a host network and
-    return the results.
-
-    """
+    """A class that can execute a query on a host network and return the results."""
 
     @property
     def type(self) -> str:
-        """
-        Return the type of the provider.
+        """Return the type of the provider.
 
         This is a string representation that can be used to identify the
         provider in a config file.
@@ -25,8 +22,7 @@ class HostProvider(Protocol):
         raise NotImplementedError()
 
     def accepts(self, uri: str) -> bool:
-        """
-        Return True if this provider can handle the URI.
+        """Return True if this provider can handle the URI.
 
         Accept calls should run quickly and do minimal work so that the router
         can quickly find the correct provider.
@@ -41,8 +37,7 @@ class HostProvider(Protocol):
         raise NotImplementedError()
 
     def get_vertex_count(self, uri: str) -> int:
-        """
-        Return the number of vertices in the graph.
+        """Return the number of vertices in the graph.
 
         Arguments:
             uri (str): The URI of the host.
@@ -54,8 +49,7 @@ class HostProvider(Protocol):
         ...
 
     def get_vertex_attribute_schema(self, uri: str) -> AttributeSchema:
-        """
-        Return the schema of the vertex attributes in the graph.
+        """Return the schema of the vertex attributes in the graph.
 
         Arguments:
             uri (str): The URI of the host.
@@ -67,8 +61,7 @@ class HostProvider(Protocol):
         ...
 
     def get_edge_count(self, uri: str) -> int:
-        """
-        Return the number of edges in the graph.
+        """Return the number of edges in the graph.
 
         Arguments:
             uri (str): The URI of the host.
@@ -80,11 +73,11 @@ class HostProvider(Protocol):
         ...
 
     def get_motif_count(self, uri: str, motif_string: str) -> int:
-        """
-        Get a count of motifs in the graph.
+        """Get a count of motifs in the graph.
 
         Arguments:
             uri (str): The URI of the host.
+            motif_string (str): The motif to count.
 
         Returns:
             int: The count of the given motif.
@@ -93,8 +86,7 @@ class HostProvider(Protocol):
         ...
 
     def get_motifs(self, uri: str, motif_string: str, aggregation_type: str | None = None) -> PossibleMotifResultTypes:
-        """
-        Get the motifs in the graph.
+        """Get the motifs in the graph.
 
         Optionally, transform the results using an aggregation from the
         MotifAggregation class.
@@ -111,8 +103,7 @@ class HostProvider(Protocol):
         ...
 
     def maybe_get_networkx_graph(self, uri: str) -> tuple[nx.Graph | None, str]:
-        """
-        Return the networkx graph for the given URI, if possible.
+        """Return the networkx graph for the given URI, if possible.
 
         Arguments:
             uri (str): The URI of the host.
@@ -136,8 +127,7 @@ class NetworkXHostProvider(HostProvider):
             return None, str(e)
 
     def get_vertex_count(self, uri: str) -> int:
-        """
-        Return the number of vertices in the graph.
+        """Return the number of vertices in the graph.
 
         Arguments:
             uri (str): The URI of the host.
@@ -149,8 +139,7 @@ class NetworkXHostProvider(HostProvider):
         return len(self.get_networkx_graph(uri).nodes)
 
     def get_vertex_attribute_schema(self, uri: str) -> dict[str, str]:
-        """
-        Return the schema of the vertex attributes in the graph.
+        """Return the schema of the vertex attributes in the graph.
 
         Arguments:
             uri (str): The URI of the host.
@@ -175,8 +164,7 @@ class NetworkXHostProvider(HostProvider):
         return attribute_types
 
     def get_edge_count(self, uri: str) -> int:
-        """
-        Return the number of edges in the graph.
+        """Return the number of edges in the graph.
 
         Arguments:
             uri (str): The URI of the host.
@@ -188,8 +176,7 @@ class NetworkXHostProvider(HostProvider):
         return len(self.get_networkx_graph(uri).edges)
 
     def get_motif_count(self, uri: str, motif_string: str) -> int:
-        """
-        Count the number of instances of a motif in the graph.
+        """Count the number of instances of a motif in the graph.
 
         Arguments:
             uri (str): The URI of the host.
@@ -205,8 +192,7 @@ class NetworkXHostProvider(HostProvider):
         return executor.count(motif)
 
     def get_motifs(self, uri: str, motif_string: str, aggregation_type: str | None = None) -> PossibleMotifResultTypes:
-        """
-        Return the motifs in the graph.
+        """Return the motifs in the graph.
 
         Optionally, transform the results using an aggregation from the
         MotifAggregation class.

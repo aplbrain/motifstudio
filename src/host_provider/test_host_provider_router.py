@@ -8,10 +8,7 @@ from .router import (
 
 
 def test_can_create_empty_router():
-    """
-    Test that we can create an empty router and that it has an empty map.
-
-    """
+    """Test that we can create an empty router and that it has an empty map."""
     router = HostProviderRouter()
     assert router.provider_for("s3://foo") is None
 
@@ -25,8 +22,7 @@ def test_can_register_provider():
 
 
 def test_can_shadow_provider():
-    """
-    Yeah um this is intended behavior.
+    """Yeah um this is intended behavior.
 
     Test that registering two providers that both match a URI results in the
     first provider being used.
@@ -41,10 +37,7 @@ def test_can_shadow_provider():
 
 
 def test_can_create_router_with_providers():
-    """
-    Test that we can create a router with providers.
-
-    """
+    """Test that we can create a router with providers."""
     run1 = S3GraphMLHostProvider(bucket="foo")
     run1_shadow = S3GraphMLHostProvider(bucket="foo")
     run2 = S3GraphMLHostProvider(bucket="bar")
@@ -55,9 +48,7 @@ def test_can_create_router_with_providers():
 
 
 def test_can_resolve_host_fs_graphml():
-    """
-    Test that the provider can find and resolve a local graphml file.
-    """
+    """Test that the provider can find and resolve a local graphml file."""
     with tempfile.NamedTemporaryFile(suffix=".graphml") as tmp:
         tmp.write(b"<graphml></graphml>")
         tmp.flush()
@@ -69,8 +60,7 @@ def test_can_resolve_host_fs_graphml():
 
 
 def test_can_validate_host_uris():
-    """
-    HostProviderRouter#validate_all_hosts should return all() == True if all
+    """HostProviderRouter#validate_all_hosts should return all() == True if all
     hosts are valid, and all() == False if any hosts are invalid.
 
     """
@@ -89,11 +79,7 @@ def test_can_validate_host_uris():
 
 
 def test_can_validate_hostlistings():
-    """
-    HostProviderRouter#validate_all_hosts can also accept HostListing objects.
-
-    """
-
+    """HostProviderRouter#validate_all_hosts can also accept HostListing objects."""
     invalid_host = HostListing(uri="cheese:///tmp/foo.graphml", name="Invalid Host")
     valid_host = HostListing(uri="file:///tmp/foo.graphml", name="Valid Host")
     assert (

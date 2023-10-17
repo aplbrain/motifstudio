@@ -1,32 +1,43 @@
+"""A Host Provider that can handle local GraphML files."""
+
 from .GraphMLHostProvider import GraphMLHostProvider
 import networkx as nx
 
 
 class FilesystemGraphMLHostProvider(GraphMLHostProvider):
-    """
-    A Host Provider that can handle local filesystem URIs.
-
-    """
+    """A Host Provider that can handle local filesystem URIs."""
 
     def __init__(self, root: str = "/"):
+        """Initialize the provider.
+
+        Arguments:
+            root (str): The root directory of the filesystem. Defaults to "/".
+
+        Returns:
+            None
+
+        """
         self.root = root
 
     @property
     def type(self) -> str:
-        """
-        Return the type of the provider.
-
-        """
+        """Return the type of the provider."""
         return "FilesystemGraphMLHostProvider"
 
     def accepts(self, uri: str) -> bool:
-        """
-        Return True if the URI is a local filesystem URI.
-
-        """
+        """Return True if the URI is a local filesystem URI."""
         return uri.startswith(f"file://{self.root}") and super().accepts(uri)
 
     def get_networkx_graph(self, uri: str) -> nx.Graph:
+        """Return a NetworkX graph from a URI.
+
+        Arguments:
+            uri (str): The URI of the graph.
+
+        Returns:
+            nx.Graph: The NetworkX graph.
+
+        """
         # Save the graph to a temporary file, then read it back in.
         # This is a workaround for NetworkX, which prevents reading from a
         # file-like object.

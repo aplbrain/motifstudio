@@ -1,3 +1,4 @@
+"""This module contains classes for aggregating motif results by vertex count."""
 from ..models import (
     _MotifResultsNonAggregated,
     _MotifResultsAggregatedHostVertex,
@@ -7,16 +8,10 @@ from .aggregator import MotifResultsAggregator
 
 
 class MotifResultsHostVertexCountAggregator(MotifResultsAggregator):
-    """
-    An aggregator that counts the number of times each host vertex was assigned
-    to each motif vertex.
-
-    """
+    """Count the number of times each host vertex was assigned to each motif vertex."""
 
     def aggregate(self, results: _MotifResultsNonAggregated) -> _MotifResultsAggregatedHostVertex:
-        """
-        Aggregate results, grouping on host vertex.
-        """
+        """Aggregate results, grouping on host vertex."""
         host_verts: _MotifResultsAggregatedHostVertex = {}
         for motif_mapping in results:
             for motif_vertex_id, host_vertex_id in motif_mapping.items():
@@ -27,16 +22,10 @@ class MotifResultsHostVertexCountAggregator(MotifResultsAggregator):
 
 
 class MotifResultsMotifVertexCountAggregator(MotifResultsAggregator):
-    """
-    An aggregator that counts the number of times each motif vertex is assigned
-    to each host vertex.
-
-    """
+    """Count the number of times each motif vertex is assigned to each host vertex."""
 
     def aggregate(self, results: _MotifResultsNonAggregated) -> _MotifResultsAggregatedMotifVertex:
-        """
-        Aggregate results, grouping on motif vertex.
-        """
+        """Aggregate results, grouping on motif vertex."""
         motif_verts: _MotifResultsAggregatedMotifVertex = {}
         for motif_mapping in results:
             for motif_vertex_id, host_vertex_id in motif_mapping.items():

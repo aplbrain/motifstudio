@@ -1,7 +1,4 @@
-"""
-Routes that have to do with the actual graph queries.
-
-"""
+"""Routes that have to do with the actual graph queries."""
 
 import datetime
 import tempfile
@@ -39,8 +36,7 @@ router = APIRouter(
 
 @router.get("/")
 def query_index(commons: Annotated[HostProviderRouterGlobalDep, Depends(provider_router)]) -> dict[str, list[str]]:
-    """
-    Get the root endpoint for the queries API.
+    """Get the root endpoint for the queries API.
 
     Right now this is just a placeholder that gives a list of the available
     queries under this endpoint prefix.
@@ -59,8 +55,7 @@ def query_graph_download(
     commons: Annotated[HostProviderRouterGlobalDep, Depends(provider_router)],
     accept: str = Header(None),
 ) -> DownloadGraphQueryResponse:
-    """
-    Get the root endpoint for the queries API.
+    """Get the root endpoint for the queries API.
 
     Right now this is just a placeholder that gives a list of the available
     queries under this endpoint prefix.
@@ -113,10 +108,7 @@ def query_count_vertices(
     vertex_count_query_request: VertexCountQueryRequest,
     commons: Annotated[HostProviderRouterGlobalDep, Depends(provider_router)],
 ) -> VertexCountQueryResponse:
-    """
-    Get the vertex count for a given host.
-
-    """
+    """Get the vertex count for a given host."""
     tic = time.time()
     uri = commons.get_uri_from_name(vertex_count_query_request.host_name)
     if uri is None:
@@ -146,10 +138,7 @@ def query_vertex_attributes(
     vertex_attribute_query_request: VertexAttributeQueryRequest,
     commons: Annotated[HostProviderRouterGlobalDep, Depends(provider_router)],
 ) -> VertexAttributeQueryResponse:
-    """
-    Get the vertex attributes for a given host.
-
-    """
+    """Get the vertex attributes for a given host."""
     tic = time.time()
     uri = commons.get_uri_from_name(vertex_attribute_query_request.host_name)
     if uri is None:
@@ -179,10 +168,7 @@ def query_count_edges(
     edge_count_query_request: EdgeCountQueryRequest,
     commons: Annotated[HostProviderRouterGlobalDep, Depends(provider_router)],
 ) -> EdgeCountQueryResponse:
-    """
-    Get a count of the edges for a given host.
-
-    """
+    """Get a count of the edges for a given host."""
     tic = time.time()
     uri = commons.get_uri_from_name(edge_count_query_request.host_name)
     if uri is None:
@@ -212,8 +198,7 @@ def query_count_motifs(
     motif_count_query_request: MotifCountQueryRequest,
     commons: Annotated[HostProviderRouterGlobalDep, Depends(provider_router)],
 ) -> MotifCountQueryResponse:
-    """
-    Get a count of the motifs for a given host.
+    """Get a count of the motifs for a given host.
 
     This is the same as sending a motif query with the `count` aggregator.
 
@@ -248,10 +233,9 @@ def query_motifs(
     motif_query_request: MotifQueryRequest,
     commons: Annotated[HostProviderRouterGlobalDep, Depends(provider_router)],
 ) -> MotifQueryResponse:
-    """
-    Get a list of the motifs for a given host, and optionally process them
-    through an aggregator.
+    """Get a list of the motifs for a given host.
 
+    Can optionally process results through an aggregator.
     Aggregator functions are defined in `motif_results_aggregators.py`.
 
     """
