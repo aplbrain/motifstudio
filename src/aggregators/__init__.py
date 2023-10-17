@@ -1,3 +1,5 @@
+"""The MotifAggregation class is a container class for result aggregation types."""
+
 import json
 from typing import Callable
 
@@ -10,7 +12,8 @@ from .vertex_count import (
 
 
 class MotifAggregation:
-    """
+    """A container class for motif-search aggregation types.
+
     The following aggregation types are supported:
 
     - `host.vertex`: Returns a mapping of each host vertex and how many times
@@ -44,13 +47,12 @@ class MotifAggregation:
 
     @classmethod
     def explain_valid(cls) -> list[str]:
+        """Return a list of valid aggregation types."""
         return [v for k, v in cls.__dict__.items() if not k.startswith("_") and isinstance(v, str)]
 
     @classmethod
     def parse_aggregation_args(cls, aggr_argument_string: str) -> dict:
-        """
-        Parse args of the form `aggr_type | { "arg1": "value1", "arg2": "value2" }`
-        """
+        """Parse args of the form `aggr_type | { "arg1": "value1", "arg2": "value2" }`."""
         if aggr_argument_string in [None, ""]:
             return {}
         if "|" not in aggr_argument_string:
@@ -62,6 +64,7 @@ class MotifAggregation:
 
     @classmethod
     def get_aggregator(cls, aggregator_string: str) -> Callable | None:
+        """Return the aggregator function for the given aggregator string."""
         if "|" in aggregator_string:
             aggregator_string = aggregator_string.split("|")[0].strip()
         if aggregator_string in [None, ""]:

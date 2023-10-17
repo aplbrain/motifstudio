@@ -12,6 +12,10 @@ profile = "black"
 [tool.ruff]
 fix = true
 line-length = 120
+select = [
+    "D",
+]
+extend-exclude = ["test_*"]
 
 [tool.ruff.pydocstyle]
 convention = "google"

@@ -1,7 +1,4 @@
-"""
-The Host Provider Router is a class that can route a query to the correct
-HostProvider.
-"""
+"""The Host Provider router routes a query to the correct HostProvider."""
 from .host_provider import (
     HostProvider,
     FilesystemGraphMLHostProvider,
@@ -13,7 +10,8 @@ from ..models import HostListing
 
 
 class HostProviderRouter:
-    """
+    """A router to route host queries to the correct provider.
+
     A Host Provider Router manages a set of HostProviders and routes queries to
     the appropriate provider based on the string URI of the host.
 
@@ -24,25 +22,27 @@ class HostProviderRouter:
     """
 
     def __init__(self, providers: list[HostProvider] | None = None):
+        """Initialize the router.
+
+        Arguments:
+            providers (list[HostProvider]): A list of HostProviders.
+
+        Returns:
+            None
+
+        """
         self._providers: list[HostProvider] = providers or []
 
     def add_provider(self, provider: HostProvider):
-        """
-        Add a provider to the router.
-
-        """
+        """Add a provider to the router."""
         self._providers.append(provider)
 
     def all_providers(self) -> list[HostProvider]:
-        """
-        Return a list of all providers.
-
-        """
+        """Return a list of all providers."""
         return self._providers
 
     def provider_for(self, uri: str) -> HostProvider | None:
-        """
-        Return the first provider that accepts the URI.
+        """Return the first provider that accepts the URI.
 
         Arguments:
             uri: A string URI.
@@ -58,11 +58,10 @@ class HostProviderRouter:
         return None
 
     def validate_all_hosts(self, host_uris: list[str] | list[HostListing]) -> list[bool]:
-        """
-        Return a list of booleans indicating whether each host is valid.
+        """Return a list of booleans indicating whether each host is valid.
 
         Arguments:
-            hosts: A list of host URIs.
+            host_uris: A list of host URIs.
 
         Returns:
             A list of booleans indicating whether each host is valid.

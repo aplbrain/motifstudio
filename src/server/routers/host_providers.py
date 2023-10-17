@@ -1,5 +1,4 @@
-"""
-Routes for host provider management.
+"""Routes for host provider management.
 
 Host providers are the delegated components that handle IO with the host graphs
 listed in the server's configuration file. The server's host provider router
@@ -21,11 +20,7 @@ router = APIRouter(prefix="/providers", tags=["providers"], dependencies=[Depend
 def list_host_providers(
     commons: Annotated[HostProviderRouterGlobalDep, Depends(provider_router)]
 ) -> dict[str, list[HostProviderPublicListing]]:
-    """
-    Get a list of all host providers that are currently registered with the
-    server's provider router.
-
-    """
+    """Get a list of all host providers registered with the server's provider router."""
     return {
         "host_providers": [
             HostProviderPublicListing(provider_type=provider.type) for provider in commons.all_providers()
@@ -35,7 +30,8 @@ def list_host_providers(
 
 @router.get("/hostlist")
 def list_hosts(commons: Annotated[HostProviderRouterGlobalDep, Depends(provider_router)]) -> dict[str, list[str]]:
-    """
+    """List all currently registered host graphs.
+
     Get a list of all hosts that are currently registered with the server's
     provider router. This returns a dictionary with a single key, "hosts",
     which maps to a list of host names. Note that these are public-facing host
