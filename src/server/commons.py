@@ -78,7 +78,7 @@ class HostProviderRouterGlobalDep:
         self.all_hosts = _hosts_from_json_config(config["hosts"])
         self.host_provider_router.validate_all_hosts(self.all_hosts)
 
-    def get_uri_from_name(self, name: str) -> str | None:
+    def get_uri_from_id(self, id: str) -> str | None:
         """Returns the URI of a host from its name.
 
         Arguments:
@@ -89,7 +89,7 @@ class HostProviderRouterGlobalDep:
 
         """
         for host in self.all_hosts:
-            if host.name == name:
+            if host.id == id:
                 return host.uri
         return None
 

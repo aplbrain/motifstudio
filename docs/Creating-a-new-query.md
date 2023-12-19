@@ -73,18 +73,18 @@ def query_graph_download(
     queries under this endpoint prefix.
 
     """
-    uri = commons.get_uri_from_name(graph_download_query_request.host_name)
+    uri = commons.get_uri_from_id(graph_download_query_request.host_id)
     if uri is None:
         raise HTTPException(
             status_code=404,
-            detail=f"No host found with name {graph_download_query_request.host_name}",
+            detail=f"No host found with ID {graph_download_query_request.host_id}",
         )
 
     provider = commons.host_provider_router.provider_for(uri)
     if provider is None:
         raise HTTPException(
             status_code=404,
-            detail=f"No provider found for host {graph_download_query_request.host_name}",
+            detail=f"No provider found for host {graph_download_query_request.host_id}",
         )
     print(accept)
 
@@ -106,7 +106,7 @@ def query_graph_download(
         )  # type: ignore
 
     return DownloadGraphQueryResponse(
-        host_name=graph_download_query_request.host_name,
+        host_id=graph_download_query_request.host_id,
         format=graph_download_query_request.format,
         graph=_get_bytes(nx_graph, graph_download_query_request.format) if nx_graph is not None else b"",
         error=error_msg,

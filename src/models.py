@@ -24,13 +24,13 @@ PossibleMotifResultTypes = (
 
 
 class _QueryRequestBase(BaseModel):
-    host_name: str = Field(..., description="The name of the host graph to query")
+    host_id: str = Field(..., description="The ID of the host graph to query")
 
 
 class _QueryResponseBase(BaseModel):
     response_time: str
     response_duration_ms: float
-    host_name: str
+    host_id: str
 
 
 class HostProviderPublicListing(BaseModel):
@@ -49,6 +49,7 @@ class HostProviderPublicListing(BaseModel):
 class HostListing(BaseModel):
     """A public listing of a host graph, containing its ID and provider."""
 
+    id: str
     uri: str
     name: str
     provider: dict[str, str]
@@ -114,7 +115,7 @@ class MotifQueryRequest(BaseModel):
         ...,
         description="The motif query to execute, in the DotMotif query language",
     )
-    host_name: str = Field(..., description="The name of the host graph to query")
+    host_id: str = Field(..., description="The ID of the host graph to query")
     # Aggregator (`aggregator`) is an optional parameter that can be used to
     # specify the type of aggregation to use when returning results. If this
     # parameter is not specified, then no aggregation is performed and the

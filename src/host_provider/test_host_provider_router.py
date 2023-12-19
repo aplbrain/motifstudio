@@ -84,8 +84,8 @@ def test_can_validate_host_uris():
 
 def test_can_validate_hostlistings():
     """HostProviderRouter#validate_all_hosts can also accept HostListing objects."""
-    invalid_host = HostListing(uri="cheese:///tmp/foo.graphml", name="Invalid Host", provider={})
-    valid_host = HostListing(uri="file:///tmp/foo.graphml", name="Valid Host", provider={})
+    invalid_host = HostListing(id="none", uri="cheese:///tmp/foo.graphml", name="Invalid Host", provider={})
+    valid_host = HostListing(id="none", uri="file:///tmp/foo.graphml", name="Valid Host", provider={})
     assert (
         all(HostProviderRouter({"fs1": FilesystemGraphMLHostProvider()}).validate_all_hosts([invalid_host])) is False
     ), "Should not validate cheese://"
