@@ -82,7 +82,7 @@ class HostProviderRouterGlobalDep:
         """Returns the URI of a host from its name.
 
         Arguments:
-            name (str): The name of the host.
+            id (str): The ID of the host.
 
         Returns:
             str | None: The URI of the host, or None if it doesn't exist.

@@ -44,6 +44,8 @@ class S3GraphMLHostProvider(GraphMLHostProvider):
         # Save the graph to a temporary file, then read it back in.
         # This is a workaround for NetworkX, which prevents reading from a
         # file-like object.
+        # TODO: Cache the graph in a temporary file, so we don't have to
+        # download it every time.
         with tempfile.NamedTemporaryFile() as f:
             self.s3_client.download_file(self.bucket, uri[len(f"s3://{self.bucket}/") :], f.name)
             return super().get_networkx_graph(f.name)

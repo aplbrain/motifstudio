@@ -50,6 +50,5 @@ class FilesystemGraphMLHostProvider(GraphMLHostProvider):
             # project from the host_provider package, so we have to go up four
             # levels with pathlib.
             cwd = Path(__file__).parent.parent.parent.parent
-            print(cwd)
             filepath = filepath.replace("$", str(cwd))
         return super().get_networkx_graph(filepath)

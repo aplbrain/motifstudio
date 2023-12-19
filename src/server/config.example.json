@@ -1,8 +1,9 @@
 {
     "hosts": [
         {
+            "id": "Witvliet_1",
             "name": "Witvliet 1",
-            "uri": "file:///$/example-data/Witvliet2020_D8_Attributed.graphml",
+            "uri": "file://$/example-data/Witvliet2020_D8_Attributed.graphml",
             "provider": {
                 "@id": "LocalFilesystemGraphMLHostProvider"
             }
