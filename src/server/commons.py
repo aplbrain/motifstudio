@@ -12,10 +12,10 @@ from functools import lru_cache
 from pathlib import Path
 
 from ..host_provider.router import HostProvider, HostProviderRouter, provider_name_map
-from ..models import HostListing
+from ..models import HostListing, HostProviderID
 
 
-def _providers_from_json_config(providers: list[dict]) -> list[HostProvider]:
+def _providers_from_json_config(providers: list[dict]) -> dict[HostProviderID, HostProvider]:
     """Returns a configured list from a dictionary of host provider configs.
 
     Most likely from a JSON file.
@@ -28,7 +28,7 @@ def _providers_from_json_config(providers: list[dict]) -> list[HostProvider]:
         list[HostProvider]: The list of configured host providers.
 
     """
-    return [provider_name_map[provider["type"]](**provider["arguments"]) for provider in providers]
+    return {provider["id"]: provider_name_map[provider["type"]](**provider["arguments"]) for provider in providers}
 
 
 def _hosts_from_json_config(hosts: list[dict]) -> list[HostListing]:
@@ -78,18 +78,18 @@ class HostProviderRouterGlobalDep:
         self.all_hosts = _hosts_from_json_config(config["hosts"])
         self.host_provider_router.validate_all_hosts(self.all_hosts)
 
-    def get_uri_from_name(self, name: str) -> str | None:
+    def get_uri_from_id(self, id: str) -> str | None:
         """Returns the URI of a host from its name.
 
         Arguments:
-            name (str): The name of the host.
+            id (str): The ID of the host.
 
         Returns:
             str | None: The URI of the host, or None if it doesn't exist.
 
         """
         for host in self.all_hosts:
-            if host.name == name:
+            if host.id == id:
                 return host.uri
         return None
 
@@ -108,7 +108,7 @@ class HostProviderRouterGlobalDep:
                 return host.name
         return None
 
-    def all_providers(self) -> list[HostProvider]:
+    def all_providers(self) -> dict[HostProviderID, HostProvider]:
         """Returns the list of all configured host providers.
 
         Arguments:

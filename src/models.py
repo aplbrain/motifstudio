@@ -13,6 +13,7 @@ _MotifResultsAggregatedMotifVertexAttribute = dict[_MotifVertexID, dict[str, int
 _AttributeType = Literal["str", "int", "float", "bool", "datetime.datetime"] | None
 _GraphFormats = Literal["graphml", "graphml.gz"] | None
 AttributeSchema = dict[str, _AttributeType]
+HostProviderID = str
 
 PossibleMotifResultTypes = (
     _MotifResultsNonAggregated
@@ -23,13 +24,13 @@ PossibleMotifResultTypes = (
 
 
 class _QueryRequestBase(BaseModel):
-    host_name: str = Field(..., description="The name of the host graph to query")
+    host_id: str = Field(..., description="The ID of the host graph to query")
 
 
 class _QueryResponseBase(BaseModel):
     response_time: str
     response_duration_ms: float
-    host_name: str
+    host_id: str
 
 
 class HostProviderPublicListing(BaseModel):
@@ -39,13 +40,19 @@ class HostProviderPublicListing(BaseModel):
         ...,
         description="The type of the host provider (i.e., name of the provider class.)",
     )
+    id: str = Field(
+        ...,
+        description="The ID of the host provider, as specified in the server's configuration file.",
+    )
 
 
 class HostListing(BaseModel):
     """A public listing of a host graph, containing its ID and provider."""
 
+    id: str
     uri: str
     name: str
+    provider: dict[str, str]
 
 
 class VertexCountQueryRequest(_QueryRequestBase):
@@ -108,7 +115,7 @@ class MotifQueryRequest(BaseModel):
         ...,
         description="The motif query to execute, in the DotMotif query language",
     )
-    host_name: str = Field(..., description="The name of the host graph to query")
+    host_id: str = Field(..., description="The ID of the host graph to query")
     # Aggregator (`aggregator`) is an optional parameter that can be used to
     # specify the type of aggregation to use when returning results. If this
     # parameter is not specified, then no aggregation is performed and the
@@ -117,7 +124,6 @@ class MotifQueryRequest(BaseModel):
     aggregation_type: str | None = Field(
         None,
         description="The type of aggregation to perform on the results",
-        optional=True,
     )
 
 
@@ -143,7 +149,6 @@ class DownloadGraphQueryRequest(_QueryRequestBase):
             "The format to download the graph in. If not specified, "
             "the default format for the host provider will be used."
         ),
-        optional=True,
     )
 
 
@@ -156,7 +161,6 @@ class DownloadGraphQueryResponse(_QueryResponseBase):
             "The format to download the graph in. If not specified, "
             "the default format for the host provider will be used."
         ),
-        optional=True,
     )
     graph: bytes = Field(
         ...,
@@ -165,5 +169,4 @@ class DownloadGraphQueryResponse(_QueryResponseBase):
     error: str | None = Field(
         None,
         description="If an error occurred, a message describing the error.",
-        optional=True,
     )

@@ -1,5 +1,6 @@
 """A Host Provider that can handle local GraphML files."""
 
+from pathlib import Path
 from .GraphMLHostProvider import GraphMLHostProvider
 import networkx as nx
 
@@ -7,7 +8,7 @@ import networkx as nx
 class FilesystemGraphMLHostProvider(GraphMLHostProvider):
     """A Host Provider that can handle local filesystem URIs."""
 
-    def __init__(self, root: str = "/"):
+    def __init__(self, root: str = ""):
         """Initialize the provider.
 
         Arguments:
@@ -41,4 +42,13 @@ class FilesystemGraphMLHostProvider(GraphMLHostProvider):
         # Save the graph to a temporary file, then read it back in.
         # This is a workaround for NetworkX, which prevents reading from a
         # file-like object.
-        return super().get_networkx_graph(uri[len("file://") :])
+        filepath = uri[len("file://") :]
+        # If the filepath starts with $, replace $ with the current top-level
+        # directory of this project.
+        if filepath.startswith("$"):
+            # Jankiness! There's no way to get the top-level directory of the
+            # project from the host_provider package, so we have to go up four
+            # levels with pathlib.
+            cwd = Path(__file__).parent.parent.parent.parent
+            filepath = filepath.replace("$", str(cwd))
+        return super().get_networkx_graph(filepath)

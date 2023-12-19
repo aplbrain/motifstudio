@@ -6,7 +6,7 @@ from .host_provider import (
     OpenCypherHostProvider,
 )
 
-from ..models import HostListing
+from ..models import HostListing, HostProviderID
 
 
 class HostProviderRouter:
@@ -21,7 +21,7 @@ class HostProviderRouter:
 
     """
 
-    def __init__(self, providers: list[HostProvider] | None = None):
+    def __init__(self, providers: dict[HostProviderID, HostProvider] | None = None):
         """Initialize the router.
 
         Arguments:
@@ -31,13 +31,13 @@ class HostProviderRouter:
             None
 
         """
-        self._providers: list[HostProvider] = providers or []
+        self._providers: dict[HostProviderID, HostProvider] = providers or {}
 
-    def add_provider(self, provider: HostProvider):
+    def add_provider(self, id: HostProviderID, provider: HostProvider):
         """Add a provider to the router."""
-        self._providers.append(provider)
+        self._providers[id] = provider
 
-    def all_providers(self) -> list[HostProvider]:
+    def all_providers(self) -> dict[HostProviderID, HostProvider]:
         """Return a list of all providers."""
         return self._providers
 
@@ -52,7 +52,7 @@ class HostProviderRouter:
             accepts the URI.
 
         """
-        for provider in self._providers:
+        for _id, provider in self._providers.items():
             if provider.accepts(uri):
                 return provider
         return None
