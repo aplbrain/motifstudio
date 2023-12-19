@@ -23,7 +23,8 @@ def list_host_providers(
     """Get a list of all host providers registered with the server's provider router."""
     return {
         "host_providers": [
-            HostProviderPublicListing(provider_type=provider.type) for provider in commons.all_providers()
+            HostProviderPublicListing(provider_type=provider.type, id=id)
+            for id, provider in commons.all_providers().items()
         ]
     }
 

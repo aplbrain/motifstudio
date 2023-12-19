@@ -13,6 +13,7 @@ _MotifResultsAggregatedMotifVertexAttribute = dict[_MotifVertexID, dict[str, int
 _AttributeType = Literal["str", "int", "float", "bool", "datetime.datetime"] | None
 _GraphFormats = Literal["graphml", "graphml.gz"] | None
 AttributeSchema = dict[str, _AttributeType]
+HostProviderID = str
 
 PossibleMotifResultTypes = (
     _MotifResultsNonAggregated
@@ -39,6 +40,10 @@ class HostProviderPublicListing(BaseModel):
         ...,
         description="The type of the host provider (i.e., name of the provider class.)",
     )
+    id: str = Field(
+        ...,
+        description="The ID of the host provider, as specified in the server's configuration file.",
+    )
 
 
 class HostListing(BaseModel):
@@ -46,6 +51,7 @@ class HostListing(BaseModel):
 
     uri: str
     name: str
+    provider: dict[str, str]
 
 
 class VertexCountQueryRequest(_QueryRequestBase):
@@ -117,7 +123,6 @@ class MotifQueryRequest(BaseModel):
     aggregation_type: str | None = Field(
         None,
         description="The type of aggregation to perform on the results",
-        optional=True,
     )
 
 
@@ -143,7 +148,6 @@ class DownloadGraphQueryRequest(_QueryRequestBase):
             "The format to download the graph in. If not specified, "
             "the default format for the host provider will be used."
         ),
-        optional=True,
     )
 
 
@@ -156,7 +160,6 @@ class DownloadGraphQueryResponse(_QueryResponseBase):
             "The format to download the graph in. If not specified, "
             "the default format for the host provider will be used."
         ),
-        optional=True,
     )
     graph: bytes = Field(
         ...,
@@ -165,5 +168,4 @@ class DownloadGraphQueryResponse(_QueryResponseBase):
     error: str | None = Field(
         None,
         description="If an error occurred, a message describing the error.",
-        optional=True,
     )
