@@ -30,7 +30,7 @@ def list_host_providers(
 
 
 @router.get("/hostlist")
-def list_hosts(commons: Annotated[HostProviderRouterGlobalDep, Depends(provider_router)]) -> dict[str, list[str]]:
+def list_hosts(commons: Annotated[HostProviderRouterGlobalDep, Depends(provider_router)]) -> dict[str, list[dict]]:
     """List all currently registered host graphs.
 
     Get a list of all hosts that are currently registered with the server's
@@ -39,7 +39,7 @@ def list_hosts(commons: Annotated[HostProviderRouterGlobalDep, Depends(provider_
     *names*, not host *URIs*.
 
     """
-    return {"hosts": [host.name for host in commons.all_hosts]}
+    return {"hosts": [{"name": host.name, "id": host.id} for host in commons.all_hosts]}
 
 
 __all__ = ["router"]

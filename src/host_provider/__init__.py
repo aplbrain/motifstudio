@@ -3,7 +3,7 @@
 from .router import HostProviderRouter
 from .host_provider import (
     HostProvider,
-    FilesystemGraphMLHostProvider,
+    FilesystemGraphHostProvider,
     S3GraphMLHostProvider,
     OpenCypherHostProvider,
 )
@@ -11,7 +11,7 @@ from .host_provider import (
 __all__ = [
     "HostProviderRouter",
     "HostProvider",
-    "FilesystemGraphMLHostProvider",
+    "FilesystemGraphHostProvider",
     "S3GraphMLHostProvider",
     "OpenCypherHostProvider",
 ]

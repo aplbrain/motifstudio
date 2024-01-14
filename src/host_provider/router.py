@@ -1,7 +1,7 @@
 """The Host Provider router routes a query to the correct HostProvider."""
 from .host_provider import (
     HostProvider,
-    FilesystemGraphMLHostProvider,
+    FilesystemGraphHostProvider,
     S3GraphMLHostProvider,
     OpenCypherHostProvider,
 )
@@ -71,7 +71,7 @@ class HostProviderRouter:
 
 
 provider_name_map = {
-    "FilesystemGraphMLHostProvider": FilesystemGraphMLHostProvider,
+    "FilesystemGraphHostProvider": FilesystemGraphHostProvider,
     "S3GraphMLHostProvider": S3GraphMLHostProvider,
     "OpenCypherHostProvider": OpenCypherHostProvider,
 }

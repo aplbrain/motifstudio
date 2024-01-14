@@ -9,6 +9,7 @@ FastAPI. Requests are handled by the endpoints defined in this file.
 import datetime
 
 from fastapi import Depends, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from .commons import provider_router
 from .routers import host_providers, queries
@@ -17,6 +18,12 @@ __version__ = "0.1.0"
 
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 app.include_router(host_providers.router, dependencies=[Depends(provider_router)])
 app.include_router(queries.router, dependencies=[Depends(provider_router)])
 

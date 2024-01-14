@@ -1,6 +1,6 @@
 import tempfile
 import networkx as nx
-from . import FilesystemGraphMLHostProvider
+from . import FilesystemGraphHostProvider
 
 
 def test_can_create_provider_from_path():
@@ -10,7 +10,7 @@ def test_can_create_provider_from_path():
         nx.write_graphml(g, f.name)  # type: ignore
         # Create a provider from the path.
         uri = "file://" + f.name
-        r = FilesystemGraphMLHostProvider()
+        r = FilesystemGraphHostProvider()
         # Check that the provider accepts the path.
         assert r.accepts(uri) is True
         # Check that the provider can get the graph.
@@ -24,6 +24,6 @@ def test_can_count_motifs():
         nx.write_graphml(g, f.name)  # type: ignore
         # Create a provider from the path.
         uri = "file://" + f.name
-        r = FilesystemGraphMLHostProvider()
+        r = FilesystemGraphHostProvider()
         # Query the provider for the motif count.
         assert r.get_motif_count(uri, "A->B") == 12

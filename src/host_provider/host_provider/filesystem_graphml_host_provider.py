@@ -1,11 +1,11 @@
 """A Host Provider that can handle local GraphML files."""
 
 from pathlib import Path
-from .GraphMLHostProvider import GraphMLHostProvider
+from .GraphMLHostProvider import SingleFileGraphHostProvider
 import networkx as nx
 
 
-class FilesystemGraphMLHostProvider(GraphMLHostProvider):
+class FilesystemGraphHostProvider(SingleFileGraphHostProvider):
     """A Host Provider that can handle local filesystem URIs."""
 
     def __init__(self, root: str = ""):
@@ -23,7 +23,7 @@ class FilesystemGraphMLHostProvider(GraphMLHostProvider):
     @property
     def type(self) -> str:
         """Return the type of the provider."""
-        return "FilesystemGraphMLHostProvider"
+        return "FilesystemGraphHostProvider"
 
     def accepts(self, uri: str) -> bool:
         """Return True if the URI is a local filesystem URI."""
