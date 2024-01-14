@@ -1,11 +1,11 @@
 """A host provider that can handle S3 URIs pointing to GraphML files."""
 import tempfile
 import boto3
-from .GraphMLHostProvider import GraphMLHostProvider
+from .GraphMLHostProvider import SingleFileGraphHostProvider
 import networkx as nx
 
 
-class S3GraphMLHostProvider(GraphMLHostProvider):
+class S3GraphMLHostProvider(SingleFileGraphHostProvider):
     """A Host Provider that can handle S3 URIs."""
 
     def __init__(self, bucket: str, s3_client=None, cache: bool = True):

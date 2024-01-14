@@ -1,11 +1,19 @@
-"""Module for handling local GraphML files (either uncompressed or compressed with gzip)."""
+"""Module for handling local graph files (either uncompressed or compressed with gzip)."""
 
 import networkx as nx
 from .host_provider import NetworkXHostProvider
 
+ACCEPTED_EXTENSIONS = {
+    "graphml": nx.read_graphml,
+    "graphml.gz": nx.read_graphml,
+    "gml": nx.read_gml,
+    "gexf": nx.read_gexf,
+    "gexf.gz": nx.read_gexf,
+}
 
-class GraphMLHostProvider(NetworkXHostProvider):
-    """Handle local GraphML files (either uncompressed or compressed with gzip)."""
+
+class SingleFileGraphHostProvider(NetworkXHostProvider):
+    """Handle local single-file graphs (either uncompressed or compressed with gzip)."""
 
     def accepts(self, uri: str) -> bool:
         """Return True if the URI is a local filesystem URI.
@@ -14,11 +22,11 @@ class GraphMLHostProvider(NetworkXHostProvider):
             uri (str): The URI to check.
 
         Returns:
-            bool: True if the URI is a local filesystem URI GraphML file that
-                ends with .graphml, .graphml.gz, or .gml.
+            bool: True if the URI is a local filesystem URI graph file that
+                ends with an accepted extension.
 
         """
-        return uri.endswith(".graphml") or uri.endswith(".graphml.gz") or uri.endswith(".gml")
+        return any(uri.endswith(ext) for ext in ACCEPTED_EXTENSIONS.keys())
 
     def get_networkx_graph(self, uri: str) -> nx.Graph:
         """Return a NetworkX graph for the URI.
@@ -30,4 +38,4 @@ class GraphMLHostProvider(NetworkXHostProvider):
             nx.Graph: The NetworkX graph.
 
         """
-        return nx.read_graphml(uri)  # type: ignore
+        return ACCEPTED_EXTENSIONS[uri.split(".")[-1]](uri)

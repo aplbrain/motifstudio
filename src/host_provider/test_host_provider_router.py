@@ -3,7 +3,7 @@ from ..models import HostListing
 from .router import (
     HostProviderRouter,
     S3GraphMLHostProvider,
-    FilesystemGraphMLHostProvider,
+    FilesystemGraphHostProvider,
 )
 
 
@@ -54,7 +54,7 @@ def test_can_resolve_host_fs_graphml():
         tmp.flush()
         router = HostProviderRouter()
         assert router.provider_for("file://" + tmp.name) is None
-        provider = FilesystemGraphMLHostProvider()
+        provider = FilesystemGraphHostProvider()
         router.add_provider("none", provider)
         assert router.provider_for("file://" + tmp.name) is provider
 
@@ -66,17 +66,15 @@ def test_can_validate_host_uris():
     """
     assert (
         all(
-            HostProviderRouter({"fs1": FilesystemGraphMLHostProvider()}).validate_all_hosts(
-                ["cheese:///tmp/foo.graphml"]
-            )
+            HostProviderRouter({"fs1": FilesystemGraphHostProvider()}).validate_all_hosts(["cheese:///tmp/foo.graphml"])
         )
         is False
     ), "Should not validate cheese://"
     assert all(
-        HostProviderRouter({"fs1": FilesystemGraphMLHostProvider()}).validate_all_hosts(["file:///tmp/foo.graphml"])
+        HostProviderRouter({"fs1": FilesystemGraphHostProvider()}).validate_all_hosts(["file:///tmp/foo.graphml"])
     ), "Should successfully validate a list comprising only file://"
     assert (
-        HostProviderRouter({"fs1": FilesystemGraphMLHostProvider()}).validate_all_hosts(
+        HostProviderRouter({"fs1": FilesystemGraphHostProvider()}).validate_all_hosts(
             ["file:///tmp/foo.graphml", "cheese:///tmp/foo.graphml"]
         )
     ) == [True, False], "Should successfully validate a list comprising only file://"
@@ -87,13 +85,13 @@ def test_can_validate_hostlistings():
     invalid_host = HostListing(id="none", uri="cheese:///tmp/foo.graphml", name="Invalid Host", provider={})
     valid_host = HostListing(id="none", uri="file:///tmp/foo.graphml", name="Valid Host", provider={})
     assert (
-        all(HostProviderRouter({"fs1": FilesystemGraphMLHostProvider()}).validate_all_hosts([invalid_host])) is False
+        all(HostProviderRouter({"fs1": FilesystemGraphHostProvider()}).validate_all_hosts([invalid_host])) is False
     ), "Should not validate cheese://"
     assert all(
-        HostProviderRouter({"fs1": FilesystemGraphMLHostProvider()}).validate_all_hosts([valid_host])
+        HostProviderRouter({"fs1": FilesystemGraphHostProvider()}).validate_all_hosts([valid_host])
     ), "Should successfully validate a list comprising only file://"
     assert (
-        HostProviderRouter({"fs1": FilesystemGraphMLHostProvider()}).validate_all_hosts([valid_host, invalid_host])
+        HostProviderRouter({"fs1": FilesystemGraphHostProvider()}).validate_all_hosts([valid_host, invalid_host])
     ) == [
         True,
         False,
