@@ -7,7 +7,7 @@ from typing import Annotated
 
 import networkx as nx
 from fastapi import APIRouter, Depends, HTTPException, Header, Response
-
+from dotmotif import Motif
 from ...models import (
     EdgeCountQueryRequest,
     EdgeCountQueryResponse,
@@ -74,17 +74,25 @@ def query_graph_download(
             status_code=404,
             detail=f"No provider found for host {graph_download_query_request.host_id}",
         )
-    print(accept)
 
     tic = time.time()
     nx_graph, error_msg = provider.maybe_get_networkx_graph(uri)
 
     def _get_bytes(graph, fmt: _GraphFormats):
+        # We never prettyprint because we have to send it over the wire next
+        # and there's no point in increasing the transfer size.
         # Create a temp file:
         with tempfile.NamedTemporaryFile(suffix=f".{fmt}") as tmp:
-            nx.write_graphml(graph, tmp.name)
-            with open(tmp.name, "rb") as f:
-                return f.read()
+            if fmt in ["graphml", "graphml.gz"]:
+                nx.write_graphml(graph, tmp.name, prettyprint=False)
+                with open(tmp.name, "rb") as f:
+                    return f.read()
+            elif fmt in ["gefx", "gefx.gz"]:
+                nx.write_gexf(graph, tmp.name, prettyprint=False)
+                with open(tmp.name, "rb") as f:
+                    return f.read()
+            else:
+                raise ValueError(f"Unknown graph format {fmt}")
 
     if nx_graph is not None and accept != "application/json":
         # Return the file as a binary response:
@@ -218,14 +226,28 @@ def query_count_motifs(
             detail=f"No provider found for host {motif_count_query_request.host_id}",
         )
 
-    count = provider.get_motif_count(uri, motif_count_query_request.query)
-    return MotifCountQueryResponse(
-        query=motif_count_query_request.query,
-        motif_count=count,
-        host_id=motif_count_query_request.host_id,
-        response_time=datetime.datetime.now().isoformat(),
-        response_duration_ms=(time.time() - tic) * 1000,
-    )
+    try:
+        count = provider.get_motif_count(uri, motif_count_query_request.query)
+        motif = Motif(motif_count_query_request.query)
+        return MotifCountQueryResponse(
+            query=motif_count_query_request.query,
+            motif_count=count,
+            motif_entities=[str(v) for v in motif.to_nx().nodes()],
+            host_id=motif_count_query_request.host_id,
+            response_time=datetime.datetime.now().isoformat(),
+            response_duration_ms=(time.time() - tic) * 1000,
+            error=None,
+        )
+    except Exception as e:
+        return MotifCountQueryResponse(
+            query=motif_count_query_request.query,
+            motif_count=-1,
+            motif_entities=[],
+            host_id=motif_count_query_request.host_id,
+            response_time=datetime.datetime.now().isoformat(),
+            response_duration_ms=(time.time() - tic) * 1000,
+            error=str(e),
+        )
 
 
 @router.post("/motifs")
@@ -255,23 +277,36 @@ def query_motifs(
         )
 
     try:
+        motif = Motif(motif_query_request.query)
         results = provider.get_motifs(
             uri,
             motif_query_request.query,
             aggregation_type=motif_query_request.aggregation_type,
         )
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    count = len(results)
-    return MotifQueryResponse(
-        query=motif_query_request.query,
-        motif_count=count,
-        motif_results=results,
-        aggregation_type=motif_query_request.aggregation_type,
-        host_id=motif_query_request.host_id,
-        response_time=datetime.datetime.now().isoformat(),
-        response_duration_ms=(time.time() - tic) * 1000,
-    )
+        count = len(results)
+        return MotifQueryResponse(
+            query=motif_query_request.query,
+            motif_count=count,
+            motif_results=results,
+            motif_entities=[str(v) for v in motif.to_nx().nodes()],
+            aggregation_type=motif_query_request.aggregation_type,
+            host_id=motif_query_request.host_id,
+            response_time=datetime.datetime.now().isoformat(),
+            response_duration_ms=(time.time() - tic) * 1000,
+            error=None,
+        )
+    except Exception as e:
+        return MotifQueryResponse(
+            query=motif_query_request.query,
+            motif_count=-1,
+            motif_results=[],
+            motif_entities=[],
+            aggregation_type=motif_query_request.aggregation_type,
+            host_id=motif_query_request.host_id,
+            response_time=datetime.datetime.now().isoformat(),
+            response_duration_ms=(time.time() - tic) * 1000,
+            error=str(e),
+        )
 
 
 __all__ = ["router"]

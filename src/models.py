@@ -11,7 +11,7 @@ _MotifResultsAggregatedHostVertex = dict[_HostVertexID, dict[_MotifVertexID, int
 _MotifResultsAggregatedMotifVertex = dict[_MotifVertexID, dict[_HostVertexID, int]]
 _MotifResultsAggregatedMotifVertexAttribute = dict[_MotifVertexID, dict[str, int]]
 _AttributeType = Literal["str", "int", "float", "bool", "datetime.datetime"] | None
-_GraphFormats = Literal["graphml", "graphml.gz"] | None
+_GraphFormats = Literal["graphml", "graphml.gz", "gexf", "gexf.gz"] | None
 AttributeSchema = dict[str, _AttributeType]
 HostProviderID = str
 
@@ -106,6 +106,11 @@ class MotifCountQueryResponse(_QueryResponseBase):
 
     query: str
     motif_count: int
+    motif_entities: list[str]
+    error: str | None = Field(
+        None,
+        description="If an error occurred, a message describing the error.",
+    )
 
 
 class MotifQueryRequest(BaseModel):
@@ -138,6 +143,11 @@ class MotifQueryResponse(_QueryResponseBase):
     motif_count: int
     aggregation_type: str | None
     motif_results: PossibleMotifResultTypes
+    motif_entities: list[str]
+    error: str | None = Field(
+        None,
+        description="If an error occurred, a message describing the error.",
+    )
 
 
 class DownloadGraphQueryRequest(_QueryRequestBase):
