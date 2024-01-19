@@ -1,7 +1,7 @@
 """A host provider that can handle S3 URIs pointing to GraphML files."""
 import tempfile
 import boto3
-from .GraphMLHostProvider import SingleFileGraphHostProvider
+from .SingleFileHostProvider import SingleFileGraphHostProvider
 import networkx as nx
 
 

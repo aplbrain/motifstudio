@@ -1,7 +1,7 @@
 """A Host Provider that can handle local GraphML files."""
 
 from pathlib import Path
-from .GraphMLHostProvider import SingleFileGraphHostProvider
+from .SingleFileHostProvider import SingleFileGraphHostProvider
 import networkx as nx
 
 
