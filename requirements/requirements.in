@@ -1,4 +1,5 @@
 boto3
+networkx
 fastapi[all]
 uvicorn[standard]
 dotmotif[neo4j]
