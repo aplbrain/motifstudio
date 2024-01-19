@@ -3,12 +3,12 @@ import { useState } from "react";
 import { Combobox } from "@headlessui/react";
 import useSWR from "swr";
 import { DatabaseIcon } from "./DatabaseIcon";
-import { HostListing, fetcher } from "./api";
+import { HostListing, fetcher, BASE_URL } from "./api";
 
 export function GraphForm({ onGraphChange }: { onGraphChange?: (graph?: HostListing) => void }) {
     // Pull graphs from web server with axios:
     const { data, error, isLoading } = useSWR<{ hosts: HostListing[] }>(
-        "http://localhost:8000/providers/hostlist",
+        `${BASE_URL}/providers/hostlist`,
         fetcher
     );
     const [selectedGraph, setSelectedGraph] = useState<HostListing>();
