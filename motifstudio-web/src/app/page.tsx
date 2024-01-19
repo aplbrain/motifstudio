@@ -5,7 +5,7 @@ import { Appbar } from "./Appbar";
 import { GraphForm } from "./GraphForm";
 import { WrappedEditor } from "./WrappedEditor";
 import useSWR from "swr";
-import { HostListing, bodiedFetcher } from "./api";
+import { HostListing, bodiedFetcher, BASE_URL } from "./api";
 
 function GraphStats({
     graph,
@@ -18,8 +18,8 @@ function GraphStats({
         data: vertData,
         error: vertError,
         isLoading: vertIsLoading,
-    } = useSWR<{ vertex_count: number }>([`http://localhost:8000/queries/vertices/count`, graph?.id], () =>
-        bodiedFetcher(`http://localhost:8000/queries/vertices/count`, {
+    } = useSWR<{ vertex_count: number }>([`${BASE_URL}/queries/vertices/count`, graph?.id], () =>
+        bodiedFetcher(`${BASE_URL}/queries/vertices/count`, {
             host_id: graph?.id,
         })
     );
@@ -27,8 +27,8 @@ function GraphStats({
         data: edgeData,
         error: edgeError,
         isLoading: edgeIsLoading,
-    } = useSWR<{ edge_count: number }>([`http://localhost:8000/queries/edges/count`, graph?.id], () =>
-        bodiedFetcher(`http://localhost:8000/queries/edges/count`, {
+    } = useSWR<{ edge_count: number }>([`${BASE_URL}/queries/edges/count`, graph?.id], () =>
+        bodiedFetcher(`${BASE_URL}/queries/edges/count`, {
             host_id: graph?.id,
         })
     );
@@ -38,8 +38,8 @@ function GraphStats({
         isLoading: vertAttrIsLoading,
     } = useSWR<{
         attributes: { [key: string]: string };
-    }>([`http://localhost:8000/queries/vertices/attributes`, graph?.id], () =>
-        bodiedFetcher(`http://localhost:8000/queries/vertices/attributes`, {
+    }>([`${BASE_URL}/queries/vertices/attributes`, graph?.id], () =>
+        bodiedFetcher(`${BASE_URL}/queries/vertices/attributes`, {
             host_id: graph?.id,
         })
     );
@@ -147,8 +147,8 @@ function ResultsFetcher({ graph, query }: { graph: HostListing | null; query: st
         data: queryData,
         error: queryError,
         isLoading: queryIsLoading,
-    } = useSWR([`http://localhost:8000/queries/motifs`, graph?.id, debouncedQuery], () =>
-        bodiedFetcher(`http://localhost:8000/queries/motifs`, { host_id: graph?.id, query: debouncedQuery })
+    } = useSWR([`${BASE_URL}/queries/motifs`, graph?.id, debouncedQuery], () =>
+        bodiedFetcher(`${BASE_URL}/queries/motifs`, { host_id: graph?.id, query: debouncedQuery })
     );
 
     if (queryIsLoading) return <LoadingSpinner />;

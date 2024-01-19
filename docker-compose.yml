@@ -1,0 +1,17 @@
+# Docker Compose for Motif Studio
+
+version: '3.8'
+services:
+  motifstudio-web:
+    # Lives at ./motifstudio-web/Dockerfile
+    build: ./motifstudio-web
+    ports:
+      - "7080:80"
+  motifstudio-server:
+    # Lives at ./server
+    build: ./server
+    ports:
+      - "7082:8000"
+
+
+
