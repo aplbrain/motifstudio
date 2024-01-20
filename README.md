@@ -3,7 +3,9 @@
 </h1>
 <p align=center>Motif Studio is a browser-based tool for querying connectomes with the <a href="https://github.com/aplbrain/dotmotif">DotMotif</a> motif query language.</p>
 
-> **Note**: Motif Studio is compatible with Python 3.10 or later.
+![image](https://github.com/aplbrain/motifstudio-web/assets/693511/d6223400-6089-4da9-892c-0e12ae83ff9f)
+
+---
 
 ## Installation and Setup
 
@@ -52,3 +54,18 @@ To run the tests once, run:
 ```bash
 pytest
 ```
+
+## Running the web application
+
+
+This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+
+## Getting Started
+
+First, run the development server:
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
