@@ -1,11 +1,11 @@
 """Models for the motif studio database and API."""
-from typing import Literal
+from typing import Any, Literal
 from pydantic import BaseModel, Field
 
 
 # Type alias:
 _MotifVertexID = str
-_HostVertexID = str
+_HostVertexID = str | Any
 _MotifResultsNonAggregated = list[dict[_MotifVertexID, _HostVertexID]]
 _MotifResultsAggregatedHostVertex = dict[_HostVertexID, dict[_MotifVertexID, int]]
 _MotifResultsAggregatedMotifVertex = dict[_MotifVertexID, dict[_HostVertexID, int]]
@@ -53,6 +53,10 @@ class HostListing(BaseModel):
     uri: str
     name: str
     provider: dict[str, str]
+    volumetric_data: dict[str, Any] = Field(
+        description="A dictionary of volumetric data for the host graph.",
+        default_factory=dict,
+    )
 
 
 class VertexCountQueryRequest(_QueryRequestBase):
@@ -148,6 +152,7 @@ class MotifQueryResponse(_QueryResponseBase):
         None,
         description="If an error occurred, a message describing the error.",
     )
+    host_volumetric_data: dict[str, Any] | None
 
 
 class DownloadGraphQueryRequest(_QueryRequestBase):

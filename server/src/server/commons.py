@@ -93,6 +93,21 @@ class HostProviderRouterGlobalDep:
                 return host.uri
         return None
 
+    def get_host_listing_from_id(self, id: str) -> HostListing | None:
+        """Returns the HostListing of a host from its ID.
+
+        Arguments:
+            id (str): The ID of the host.
+
+        Returns:
+            HostListing | None: The HostListing of the host, or None if it doesn't exist.
+
+        """
+        for host in self.all_hosts:
+            if host.id == id:
+                return host
+        return None
+
     def get_name_from_uri(self, uri: str) -> str | None:
         """Returns the name of a host from its URI.
 

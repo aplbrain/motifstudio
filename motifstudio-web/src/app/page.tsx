@@ -5,7 +5,7 @@ import { Appbar } from "./Appbar";
 import { GraphForm } from "./GraphForm";
 import { WrappedEditor } from "./WrappedEditor";
 import useSWR from "swr";
-import { HostListing, bodiedFetcher, BASE_URL } from "./api";
+import { HostListing, bodiedFetcher, BASE_URL, neuroglancerUrlFromHostVolumetricData } from "./api";
 
 function GraphStats({
     graph,
@@ -221,6 +221,9 @@ function ResultsFetcher({ graph, query }: { graph: HostListing | null; query: st
                 <table className="table-auto">
                     <thead className="border-b-2">
                         <tr className="border-b-2">
+                            <th>
+
+                            </th>
                             {queryData?.motif_entities ? (
                                 queryData.motif_entities.map((entity: string, i: number) => (
                                     <th className="truncate text-left" key={i}>
@@ -236,10 +239,19 @@ function ResultsFetcher({ graph, query }: { graph: HostListing | null; query: st
                         {queryData?.motif_results?.length ? (
                             queryData.motif_results.slice(0, 10000).map((result: any, i: number) => (
                                 <tr key={i} className="border-b-2 hover:bg-gray-100">
+                                    <a href={
+                                        neuroglancerUrlFromHostVolumetricData(
+                                            queryData?.host_volumetric_data?.uri,
+                                            queryData?.host_volumetric_data?.other_channels || [],
+                                            Object.values(result).map((v: any) => v.__segmentation_id__)
+                                        )
+                                    } target="_blank" rel="noreferrer">
+                                        <b>View</b>
+                                    </a>
                                     {queryData?.motif_entities ? (
                                         queryData.motif_entities.map((entity: string, j: number) => (
-                                            <td key={j} className="truncate max-w-xs" title={result[entity]}>
-                                                {result[entity]}
+                                            <td key={j} className="truncate max-w-xs" title={result[entity].id}>
+                                                {result[entity].id}
                                             </td>
                                         ))
                                     ) : (
