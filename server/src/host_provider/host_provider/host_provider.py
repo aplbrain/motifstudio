@@ -232,6 +232,17 @@ class NetworkXHostProvider(HostProvider):
         # pre-processing arguments in the future, we will likely want to handle
         # them more explicitly.
         results = executor.find(motif, limit=parsed_agg_args.get("limit", None))
+        try:
+            results = [
+                {k: {
+                    "id": v,
+                    **graph.nodes[v],
+                }
+                for k, v in result.items()}
+                for result in results
+            ]
+        except AttributeError:
+            print(f"Could not enrich motif result dict for host {uri}")
         return aggregator(**parsed_agg_args).aggregate(results)
 
 

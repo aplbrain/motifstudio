@@ -14,6 +14,8 @@ const nextConfig = {
 
     // Static output:
     output: "export",
+
+    images: { unoptimized: true }
 }
 
 module.exports = nextConfig
