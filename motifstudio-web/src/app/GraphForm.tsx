@@ -7,10 +7,7 @@ import { HostListing, fetcher, BASE_URL } from "./api";
 
 export function GraphForm({ onGraphChange }: { onGraphChange?: (graph?: HostListing) => void }) {
     // Pull graphs from web server with axios:
-    const { data, error, isLoading } = useSWR<{ hosts: HostListing[] }>(
-        `${BASE_URL}/providers/hostlist`,
-        fetcher
-    );
+    const { data, error, isLoading } = useSWR<{ hosts: HostListing[] }>(`${BASE_URL}/providers/hostlist`, fetcher);
     const [selectedGraph, setSelectedGraph] = useState<HostListing>();
     const [query, setQuery] = useState("");
 
@@ -45,7 +42,7 @@ export function GraphForm({ onGraphChange }: { onGraphChange?: (graph?: HostList
                                 onChange={(event) => setQuery(event.target.value)}
                                 className="w-full p-4 rounded-lg shadow-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent font-bold"
                                 placeholder="Choose a host graph..."
-                                displayValue={(graph) => graph?.name}
+                                displayValue={(graph: HostListing) => graph?.name}
                             />
                             <Combobox.Options className="p-3 rounded-lg shadow-lg border border-gray-200 z-10 bg-white overflow-y-scroll max-h-64 absolute w-full">
                                 {filteredGraphs.map((graph) => (

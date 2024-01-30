@@ -263,6 +263,12 @@ def query_motifs(
     """
     tic = time.time()
     uri = commons.get_uri_from_id(motif_query_request.host_id)
+    listing = commons.get_host_listing_from_id(motif_query_request.host_id)
+    volumetric_data = None
+    try:
+        volumetric_data = listing.volumetric_data
+    except Exception as e:
+        print(f"Failed to get volumetric data: {e}")
     if uri is None:
         raise HTTPException(
             status_code=404,
@@ -291,6 +297,7 @@ def query_motifs(
             motif_entities=[str(v) for v in motif.to_nx().nodes()],
             aggregation_type=motif_query_request.aggregation_type,
             host_id=motif_query_request.host_id,
+            host_volumetric_data=volumetric_data,
             response_time=datetime.datetime.now().isoformat(),
             response_duration_ms=(time.time() - tic) * 1000,
             error=None,
@@ -303,6 +310,7 @@ def query_motifs(
             motif_entities=[],
             aggregation_type=motif_query_request.aggregation_type,
             host_id=motif_query_request.host_id,
+            host_volumetric_data=volumetric_data,
             response_time=datetime.datetime.now().isoformat(),
             response_duration_ms=(time.time() - tic) * 1000,
             error=str(e),
