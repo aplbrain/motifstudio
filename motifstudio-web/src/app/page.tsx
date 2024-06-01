@@ -243,7 +243,7 @@ function ResultsFetcher({ graph, query }: { graph: HostListing | null; query: st
                                         neuroglancerUrlFromHostVolumetricData(
                                             queryData?.host_volumetric_data?.uri,
                                             queryData?.host_volumetric_data?.other_channels || [],
-                                            Object.values(result).map((v: any) => v.__segmentation_id__)
+                                            Object.values(result).map((v: any) => v?.__segmentation_id__ || v.id)
                                         )
                                     } target="_blank" rel="noreferrer">
                                         <b>View</b>
