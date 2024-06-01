@@ -8,7 +8,7 @@ export const neuroglancerUrlFromHostVolumetricData = (
     otherChannels: string[],
     focusedSegments: number[]
 ): string => {
-    console.log(focusedSegments);
+    // console.log(focusedSegments);
     const state = {
         layers: [
             ...otherChannels.map((channel) => ({
