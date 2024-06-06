@@ -69,3 +69,24 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+
+---
+
+## Citation
+
+If this work is useful to your research, please cite the following paper:
+
+[Scalable graph analysis tools for the connectomics community](https://www.biorxiv.org/content/10.1101/2022.06.01.494307v1.abstract)
+Matelsky et al., 2022
+
+```bibtex
+@article{matelsky2022scalable,
+  title={Scalable graph analysis tools for the connectomics community},
+  author={Matelsky, Jordan K and Johnson, Erik C and Wester, Brock and Gray-Roncal, William},
+  journal={bioRxiv},
+  pages={2022--06},
+  year={2022},
+  publisher={Cold Spring Harbor Laboratory}
+}
+```
