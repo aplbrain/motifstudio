@@ -41,7 +41,7 @@ export function GraphForm({ onGraphChange }: { onGraphChange?: (graph?: HostList
                             <Combobox.Input
                                 onChange={(event) => setQuery(event.target.value)}
                                 className="w-full p-4 rounded-lg shadow-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent font-bold"
-                                placeholder="Choose a host graph..."
+                                placeholder="Start typing or press the down arrow to choose a host graph..."
                                 displayValue={(graph: HostListing) => graph?.name}
                             />
                             <Combobox.Options className="p-3 rounded-lg shadow-lg border border-gray-200 z-10 bg-white overflow-y-scroll max-h-64 absolute w-full">
