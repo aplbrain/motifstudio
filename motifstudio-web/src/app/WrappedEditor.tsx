@@ -88,6 +88,9 @@ export function WrappedEditor({
                     onChange(value);
                 }
             }}
+            onMount={(editor, monaco) => {
+                onChange ? onChange(editor.getValue()) : null;
+            }}
             defaultLanguage="motiflang"
             defaultValue={startValue || _DEFAULT_EDITOR_CONTENTS}
             options={{
