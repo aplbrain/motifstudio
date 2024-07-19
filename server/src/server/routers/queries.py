@@ -87,7 +87,7 @@ def query_graph_download(
                 nx.write_graphml(graph, tmp.name, prettyprint=False)
                 with open(tmp.name, "rb") as f:
                     return f.read()
-            elif fmt in ["gefx", "gefx.gz"]:
+            elif fmt in ["gexf", "gexf.gz"]:
                 nx.write_gexf(graph, tmp.name, prettyprint=False)
                 with open(tmp.name, "rb") as f:
                     return f.read()
