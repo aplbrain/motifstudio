@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { Appbar } from "./Appbar";
 import { GraphForm } from "./GraphForm";
@@ -7,29 +7,18 @@ import { WrappedEditor } from "./WrappedEditor";
 import { HostListing } from "./api";
 import { GraphStats } from "./GraphStats";
 import { ResultsWrapper } from "./ResultsWrapper";
+import { getQueryParams, updateQueryParams } from "./queryparams";
 
-function getQueryParams() {
-    const search = window.location.search;
-    const params = new URLSearchParams(search);
-    return {
-        host_id: decodeURIComponent(params.get("host_id") || ""),
-        host_name: decodeURIComponent(params.get("host_name") || ""),
-        motif: decodeURIComponent(params.get("motif") || ""),
-    };
-}
-
-function updateQueryParams(params: { [key: string]: string }) {
-    const search = new URLSearchParams(window.location.search);
-    for (const key in params) {
-        // URL-encode each value:
-        search.set(key, encodeURIComponent(params[key]));
-    }
-    window.history.replaceState({}, "", `${window.location.pathname}?${search}`);
-}
-
+/**
+ * The main page of the application.
+ *
+ * This component is the main entry point for the application, and it contains
+ * the main layout of the application. It is responsible for managing the state
+ * of the graph, the motif query, and the entities in the graph.
+ */
 export default function Home() {
     const { host_id, motif, host_name } = getQueryParams();
-    const [currentGraph, setCurrentGraph] = useState<HostListing | null>({
+    const [currentGraph, setCurrentGraph] = useState<HostListing | undefined>({
         id: host_id || "",
         name: host_name || "",
     });

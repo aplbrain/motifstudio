@@ -18,11 +18,11 @@ export function GraphForm({
     onGraphChange,
 }: {
     startValue?: HostListing;
-    onGraphChange?: (graph?: HostListing) => void;
+    onGraphChange?: (graph: HostListing) => void;
 }) {
     // Pull graphs from web server with axios:
     const { data, error, isLoading } = useSWR<{ hosts: HostListing[] }>(`${BASE_URL}/providers/hostlist`, fetcher);
-    const [selectedGraph, setSelectedGraph] = useState<HostListing>(startValue || null);
+    const [selectedGraph, setSelectedGraph] = useState<HostListing>(startValue);
     const [query, setQuery] = useState("");
 
     // Simple loading/error handling.
