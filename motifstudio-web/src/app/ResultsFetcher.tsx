@@ -43,7 +43,17 @@ export function ResultsFetcher({ graph, query }: { graph: HostListing | null; qu
         motifCountString = queryData.motif_count.toLocaleString();
     }
 
-    function downloadResults(format: string) {
+    /**
+     * Download the results in the requested format.
+     *
+     * Operates by creating a Blob of the data and creating a URL to download
+     * the Blob, then clicking the link to download the file.
+     *
+     * @param {string} format - The format to download the results in. One of
+     *    "json", "csv".
+     * @returns {void}
+     */
+    function downloadResults(format: string): void {
         if (format === "json") {
             const blob = new Blob([JSON.stringify(queryData)], { type: "application/json" });
             const url = URL.createObjectURL(blob);
