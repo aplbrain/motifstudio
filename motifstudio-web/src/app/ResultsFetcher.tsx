@@ -43,6 +43,39 @@ export function ResultsFetcher({ graph, query }: { graph: HostListing | null; qu
         motifCountString = queryData.motif_count.toLocaleString();
     }
 
+    /**
+     * Download the results in the requested format.
+     *
+     * Operates by creating a Blob of the data and creating a URL to download
+     * the Blob, then clicking the link to download the file.
+     *
+     * @param {string} format - The format to download the results in. One of
+     *    "json", "csv".
+     * @returns {void}
+     */
+    function downloadResults(format: string): void {
+        if (format === "json") {
+            const blob = new Blob([JSON.stringify(queryData)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "motif_results.json";
+            a.click();
+        } else if (format === "csv") {
+            const csv = queryData.motif_results.map((result: any) => {
+                return queryData.motif_entities.map((entity: string) => result[entity].id).join(",");
+            });
+            const blob = new Blob([csv.join("\n")], { type: "text/csv" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "motif_results.csv";
+            a.click();
+        } else {
+            console.error(`Unknown requested download format: ${format}`);
+        }
+    }
+
     return (
         <>
             <h2 className="text-xl font-mono w-full">Results</h2>
@@ -80,6 +113,25 @@ export function ResultsFetcher({ graph, query }: { graph: HostListing | null; qu
                             </span>
                         );
                     })}
+                </div>
+            </div>
+            <div className="flex flex-row gap-2 items-center">
+                <div className="w-full">
+                    <b>Download</b>
+                </div>
+                <div className="w-full flex gap-2">
+                    <button
+                        className="bg-blue-500  hover:bg-blue-700 text-white font-bold px-4 rounded"
+                        onClick={() => downloadResults("json")}
+                    >
+                        JSON
+                    </button>
+                    <button
+                        className="bg-blue-500  hover:bg-blue-700 text-white font-bold px-4 rounded"
+                        onClick={() => downloadResults("csv")}
+                    >
+                        CSV
+                    </button>
                 </div>
             </div>
             <div className="flex flex-col gap-2 max-h-64 overflow-y-scroll">

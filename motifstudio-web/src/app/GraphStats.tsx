@@ -151,10 +151,16 @@ export function GraphStats({
                 {/* Download graph buttons */}
                 <h3 className="text-lg font-mono w-full">Download graph</h3>
                 <div className="flex gap-2">
-                    <button onClick={() => downloadGraph("graphml")} className="font-bold py-2 px-4 bg-blue-50">
+                    <button
+                        onClick={() => downloadGraph("graphml")}
+                        className="font-bold rounded text-white px-4 bg-blue-500 hover:bg-blue-700"
+                    >
                         GraphML
                     </button>
-                    <button onClick={() => downloadGraph("gexf")} className="font-bold py-2 px-4 bg-blue-50">
+                    <button
+                        onClick={() => downloadGraph("gexf")}
+                        className="font-bold rounded text-white px-4 bg-blue-500 hover:bg-blue-700"
+                    >
                         GEXF
                     </button>
                 </div>
