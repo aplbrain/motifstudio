@@ -62,6 +62,28 @@ export function WrappedEditor({
                 "editor.foreground": "#888888",
             },
         });
+        monaco.editor.defineTheme("motiftheme-dark", {
+            base: "vs-dark",
+            inherit: false,
+            rules: [
+                {
+                    token: "operator",
+                    foreground: "ff0000",
+                    fontStyle: "bold",
+                },
+                {
+                    token: "edge",
+                    foreground: "0066dd",
+                    fontStyle: "bold",
+                },
+                { token: "entity", foreground: "008800" },
+                { token: "macro", foreground: "888800" },
+            ],
+            colors: {
+                "editor.foreground": "#888888",
+                "editor.background": "#1f2937",
+            },
+        });
 
         // Set of variable entity names that can be auto-completed:
         // const variableEntityNames = ["A", "B"];
@@ -81,7 +103,7 @@ export function WrappedEditor({
     return (
         <Editor
             height="40vh"
-            theme="motiftheme"
+            theme={window.matchMedia("(prefers-color-scheme: dark)").matches ? "motiftheme-dark" : "motiftheme"}
             beforeMount={handleEditorWillMount}
             onChange={(value, event) => {
                 if (onChange) {

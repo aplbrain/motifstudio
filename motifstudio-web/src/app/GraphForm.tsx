@@ -40,7 +40,7 @@ export function GraphForm({
 
     // Return the dropdown with the filtered graphs as the options.
     return (
-        <div className="h-full bg-white p-4 rounded-lg shadow-lg">
+        <div className="h-full bg-white p-4 rounded-lg shadow-lg dark:bg-gray-800">
             <h2 className="text-xl font-mono">Host Graph</h2>
             <hr className="my-2" />
 
@@ -60,19 +60,22 @@ export function GraphForm({
                         <div className="relative">
                             <Combobox.Input
                                 onChange={(event) => setQuery(event.target.value)}
-                                className="w-full p-4 rounded-lg shadow-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent font-bold"
+                                className="w-full p-4 rounded-lg shadow-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent font-bold dark:bg-gray-900 dark:text-gray-200"
                                 placeholder="Start typing or press the down arrow to choose a host graph..."
                                 displayValue={(graph: HostListing) => graph?.name}
                             />
-                            <Combobox.Options className="p-3 rounded-lg shadow-lg border border-gray-200 z-10 bg-white overflow-y-scroll max-h-64 absolute w-full">
+                            <Combobox.Options className="p-3 rounded-lg shadow-lg border overflow-y-scroll max-h-64 absolute w-full">
                                 {filteredGraphs.map((graph) => (
                                     <Combobox.Option
                                         key={graph.id}
                                         value={graph}
                                         className={({ active }) => `${
-                                            active ? "text-white bg-blue-400" : "text-gray-900"
+                                            active
+                                                ? "text-white bg-blue-400 dark:bg-blue-400 dark:text-white"
+                                                : "text-gray-900 dark:text-gray-200"
                                         }
-                                        cursor-default select-none relative py-2 pl-10 pr-4 hover:bg-blue-400 hover:text-white flex items-center justify-between`}
+                                        cursor-default select-none relative py-2 pl-10 pr-4 hover:bg-blue-400 hover:text-white flex items-center justify-between text-sm
+                                        `}
                                     >
                                         <b className="font-bold">{graph.name}</b>{" "}
                                         <div className="text-xs inline font-mono ml-4">{graph.id}</div>
