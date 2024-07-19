@@ -1,367 +1,51 @@
 "use client";
-import { useState } from "react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+
 import { Appbar } from "./Appbar";
 import { GraphForm } from "./GraphForm";
 import { WrappedEditor } from "./WrappedEditor";
-import useSWR from "swr";
-import { HostListing, bodiedFetcher, BASE_URL, neuroglancerUrlFromHostVolumetricData } from "./api";
+import { HostListing } from "./api";
+import { GraphStats } from "./GraphStats";
+import { ResultsWrapper } from "./ResultsWrapper";
 
-/**
- * Display graph statistics and attributes when a host is selected.
- *
- * This includes both simple invariants (nodes, edges, density) and vertex
- * attributes, so that a query can be constructed with the correct attribute
- * names. This component is also responsible for sharing the attributes with
- * the rest of the app --- a function mainly used to get the set of available
- * attributes for autocompletion in the query editor.
- *
- * @param {HostListing} graph - The selected host graph.
- * @param {(attributes: { [key: string]: string }) => void} onAttributesLoaded -
- *      Callback function to share the attributes with the rest of the app.
- */
-function GraphStats({
-    graph,
-    onAttributesLoaded,
-}: {
-    graph: HostListing;
-    onAttributesLoaded?: (attributes: { [key: string]: string }) => void;
-}) {
-    // Fetch graph statistics and attributes.
-    // TODO: Perhaps these should all go in one combined query?
-    const {
-        data: vertData,
-        error: vertError,
-        isLoading: vertIsLoading,
-    } = useSWR<{ vertex_count: number }>([`${BASE_URL}/queries/vertices/count`, graph?.id], () =>
-        bodiedFetcher(`${BASE_URL}/queries/vertices/count`, {
-            host_id: graph?.id,
-        })
-    );
-    const {
-        data: edgeData,
-        error: edgeError,
-        isLoading: edgeIsLoading,
-    } = useSWR<{ edge_count: number }>([`${BASE_URL}/queries/edges/count`, graph?.id], () =>
-        bodiedFetcher(`${BASE_URL}/queries/edges/count`, {
-            host_id: graph?.id,
-        })
-    );
-    const {
-        data: vertAttrData,
-        error: vertAttrError,
-        isLoading: vertAttrIsLoading,
-    } = useSWR<{
-        attributes: { [key: string]: string };
-    }>([`${BASE_URL}/queries/vertices/attributes`, graph?.id], () =>
-        bodiedFetcher(`${BASE_URL}/queries/vertices/attributes`, {
-            host_id: graph?.id,
-        })
-    );
-
-    // To handle the fact that the attributes are loaded asynchronously, we
-    // provide a callback function to the parent component to share the
-    // attributes when they are loaded.
-    useEffect(() => {
-        if (vertAttrData?.attributes) {
-            onAttributesLoaded?.(vertAttrData.attributes);
-        }
-    }, [vertAttrData?.attributes, onAttributesLoaded]);
-
-    if (vertIsLoading || edgeIsLoading) return <div>Loading...</div>;
-    if (vertError || edgeError) return <div>Error: {vertError}</div>;
-    if (!vertData || !edgeData) return <div>No data</div>;
-
-    /**
-     * Download the graph in a selected format.
-     *
-     * @param {string} format - The format to download the graph in. One of
-     *     "graphml", "gml", "gexf", "json".
-     */
-    function downloadGraph(format: string = "graphml") {
-        // POST to /api/queries/graph/download with the "host_id" and "format"
-        // parameters in the body.
-        fetch(`${BASE_URL}/queries/graph/download`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Accept: format,
-            },
-            body: JSON.stringify({
-                host_id: graph.id,
-                format: format,
-            }),
-        })
-            .then((res) => res.blob())
-            .then((blob) => {
-                // Create a URL for the blob and create a link to download it.
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = `${graph.name}.${format}`;
-                a.click();
-            });
-    }
-
-    // Render the attributes and statistics.
-    return graph ? (
-        <div className="flex w-full h-full p-4 bg-white rounded-lg shadow-lg">
-            <div className="flex flex-col gap-2 w-full">
-                <h2 className="text-xl font-mono w-full">Graph Properties for {graph.name}</h2>
-                <hr className="my-2 w-full" />
-                {/* A "table" showing nodes/edges/density */}
-                <div className="flex flex-col gap-2">
-                    <div className="flex flex-row gap-2 items-center">
-                        <div className="w-1/2">
-                            <b>Nodes</b>
-                        </div>
-                        <div className="w-1/2">{vertData?.vertex_count}</div>
-                    </div>
-                    <div className="flex flex-row gap-2 items-center">
-                        <div className="w-1/2">
-                            <b>Edges</b>
-                        </div>
-                        <div className="w-1/2">{edgeData?.edge_count}</div>
-                    </div>
-                    <div className="flex flex-row gap-2 items-center">
-                        <div className="w-1/2">
-                            <b>Density</b>
-                        </div>
-                        <div className="w-1/2">
-                            {((edgeData?.edge_count || 0) / Math.pow(vertData?.vertex_count || 0, 2)).toFixed(6)}
-                        </div>
-                    </div>
-                </div>
-
-                <hr className="my-2 w-full" />
-
-                {/* Vertex attributes list */}
-                <h3 className="text-lg font-mono w-full">Vertex Attributes</h3>
-                <div className="flex gap-2">
-                    {vertAttrData?.attributes
-                        ? Object.entries(vertAttrData?.attributes).map(([key, value]) => (
-                              <span
-                                  key={key}
-                                  className="px-2 py-1 bg-blue-50 rounded-md shadow-sm text-sm font-medium text-blue-800"
-                              >
-                                  {key} <b className="font-mono">({value})</b>
-                              </span>
-                          ))
-                        : null}
-                </div>
-
-                <hr className="my-2 w-full" />
-
-                {/* Download graph buttons */}
-                <h3 className="text-lg font-mono w-full">Download graph</h3>
-                <div className="flex gap-2">
-                    <button onClick={() => downloadGraph("graphml")} className="font-bold py-2 px-4 bg-blue-50">
-                        GraphML
-                    </button>
-                    <button onClick={() => downloadGraph("gexf")} className="font-bold py-2 px-4 bg-blue-50">
-                        GEXF
-                    </button>
-                </div>
-            </div>
-        </div>
-    ) : (
-        <div></div>
-    );
+function getQueryParams() {
+    const search = window.location.search;
+    const params = new URLSearchParams(search);
+    return {
+        host_id: decodeURIComponent(params.get("host_id") || ""),
+        host_name: decodeURIComponent(params.get("host_name") || ""),
+        motif: decodeURIComponent(params.get("motif") || ""),
+    };
 }
 
-function useDebounce(value: any, delay: number) {
-    const [debouncedValue, setDebouncedValue] = useState(value);
-
-    useEffect(() => {
-        const handler = setTimeout(() => {
-            setDebouncedValue(value);
-        }, delay);
-
-        return () => {
-            clearTimeout(handler);
-        };
-    }, [value, delay]);
-
-    return debouncedValue;
-}
-
-function ResultsWrapper({ graph, query }: { graph: HostListing | null; query: string }) {
-    // Trigger results fetch on button click
-    const [trigger, setTrigger] = useState(false);
-    // When graph or query changes, reset trigger
-    useEffect(() => {
-        setTrigger(false);
-    }, [graph, query]);
-
-    return (
-        <div className="flex flex-col gap-2 w-full h-full p-4 bg-white rounded-lg shadow-lg">
-            {!trigger ? (
-                <button
-                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                    onClick={() => setTrigger(!trigger)}
-                >
-                    Run Query
-                </button>
-            ) : null}
-            {trigger ? <ResultsFetcher graph={graph} query={query} /> : null}
-        </div>
-    );
-}
-function ResultsFetcher({ graph, query }: { graph: HostListing | null; query: string }) {
-    const debouncedQuery = useDebounce(query, 500);
-
-    const {
-        data: queryData,
-        error: queryError,
-        isLoading: queryIsLoading,
-    } = useSWR([`${BASE_URL}/queries/motifs`, graph?.id, debouncedQuery], () =>
-        bodiedFetcher(`${BASE_URL}/queries/motifs`, { host_id: graph?.id, query: debouncedQuery })
-    );
-
-    if (queryIsLoading) return <LoadingSpinner />;
-
-    let durationString = "";
-    if (queryData?.response_duration_ms) {
-        // < 2 sec, show ms
-        if (queryData.response_duration_ms < 2000) {
-            durationString = `${queryData.response_duration_ms.toFixed(2)} ms`;
-        }
-        // Else show 3 decimal places of seconds
-        else {
-            durationString = `${(queryData.response_duration_ms / 1000).toFixed(3)} sec`;
-        }
+function updateQueryParams(params: { [key: string]: string }) {
+    const search = new URLSearchParams(window.location.search);
+    for (const key in params) {
+        // URL-encode each value:
+        search.set(key, encodeURIComponent(params[key]));
     }
-
-    let errorText = "";
-    if (queryData?.error) {
-        errorText = queryData.error;
-        if (errorText.includes("max() arg is an empty sequence")) {
-            errorText = "Motif must contain only one connected component.";
-        }
-    }
-
-    let motifCountString = "";
-    if (queryData?.motif_count) {
-        motifCountString = queryData.motif_count.toLocaleString();
-    }
-
-    return (
-        <>
-            <h2 className="text-xl font-mono w-full">Results</h2>
-            <hr className="my-2 w-full" />
-            <div className="flex flex-row gap-2 items-center">
-                <div className="w-full">
-                    <b>Result Count</b>
-                </div>
-                <div className="w-full">{motifCountString || "Error"}</div>
-            </div>
-            <div className="flex flex-row gap-2 items-center">
-                <div className="w-full">
-                    <b>Query Duration</b>
-                </div>
-                <div className="w-full">
-                    {queryData?.response_duration_ms ? (
-                        <span>{durationString}</span>
-                    ) : (
-                        <span className="text-red-500">Error</span>
-                    )}
-                </div>
-            </div>
-            <div className="flex flex-row gap-2 items-center">
-                <div className="w-full">
-                    <b>Entities</b>
-                </div>
-                <div className="w-full">
-                    {(queryData?.motif_entities || []).map((e: string) => {
-                        return (
-                            <span
-                                key={e}
-                                className="px-2 py-1 bg-blue-100 rounded-md shadow-sm text-sm font-medium text-blue-800 mr-2"
-                            >
-                                {e}
-                            </span>
-                        );
-                    })}
-                </div>
-            </div>
-            <div className="flex flex-col gap-2 max-h-64 overflow-y-scroll">
-                <table className="table-auto">
-                    <thead className="border-b-2">
-                        <tr className="border-b-2">
-                            <th></th>
-                            {queryData?.motif_entities ? (
-                                queryData.motif_entities.map((entity: string, i: number) => (
-                                    <th className="truncate text-left" key={i}>
-                                        {entity}
-                                    </th>
-                                ))
-                            ) : (
-                                <div></div>
-                            )}
-                        </tr>
-                    </thead>
-                    <tbody className="border-b-2">
-                        {queryData?.motif_results?.length ? (
-                            queryData.motif_results.slice(0, 10000).map((result: any, i: number) => (
-                                <tr key={i} className="border-b-2 hover:bg-gray-100">
-                                    <a
-                                        href={neuroglancerUrlFromHostVolumetricData(
-                                            queryData?.host_volumetric_data?.uri,
-                                            queryData?.host_volumetric_data?.other_channels || [],
-                                            Object.values(result).map((v: any) => v?.__segmentation_id__ || v.id)
-                                        )}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                    >
-                                        <b>View</b>
-                                    </a>
-                                    {queryData?.motif_entities ? (
-                                        queryData.motif_entities.map((entity: string, j: number) => (
-                                            <td key={j} className="truncate max-w-xs" title={result[entity].id}>
-                                                {result[entity].id}
-                                            </td>
-                                        ))
-                                    ) : (
-                                        <div></div>
-                                    )}
-                                </tr>
-                            ))
-                        ) : (
-                            <div>
-                                {queryData?.error ? (
-                                    <div className="text-red-500">{errorText}</div>
-                                ) : (
-                                    <div>No results</div>
-                                )}
-                            </div>
-                        )}
-                    </tbody>
-                </table>
-            </div>
-        </>
-    );
-}
-
-function LoadingSpinner() {
-    return (
-        <div className="flex flex-col items-center justify-center">
-            <svg
-                className="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-400"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-            >
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-            </svg>
-        </div>
-    );
+    window.history.replaceState({}, "", `${window.location.pathname}?${search}`);
 }
 
 export default function Home() {
-    const [currentGraph, setCurrentGraph] = useState<HostListing | null>();
-    const [queryText, setQueryText] = useState("");
+    const { host_id, motif, host_name } = getQueryParams();
+    const [currentGraph, setCurrentGraph] = useState<HostListing | null>({
+        id: host_id || "",
+        name: host_name || "",
+    });
+    const [queryText, setQueryText] = useState(motif || "");
     const [entities, setEntities] = useState<{ [key: string]: string }>({});
+
+    function setSelectedGraph(graph: HostListing) {
+        setCurrentGraph(graph);
+        updateQueryParams({ host_id: graph.id, host_name: graph.name });
+    }
+
+    function updateMotifTest(value: string) {
+        setQueryText(value);
+        updateQueryParams({ motif: value });
+    }
+
     return (
         <main className="flex min-h-screen flex-col items-center">
             <Appbar />
@@ -369,11 +53,12 @@ export default function Home() {
                 <div className="flex flex-col justify-center w-full h-full p-4 gap-4">
                     <div className="bg-white rounded-lg shadow-lg pt-1">
                         <WrappedEditor
+                            startValue={queryText}
                             entityNames={currentGraph ? Object.keys(entities) : undefined}
-                            onChange={(value) => setQueryText(value || "")}
+                            onChange={(value) => updateMotifTest(value || "")}
                         />
                     </div>
-                    <GraphForm onGraphChange={setCurrentGraph} />
+                    <GraphForm startValue={currentGraph} onGraphChange={setSelectedGraph} />
                 </div>
                 <div className="div flex w-full flex-col py-4 gap-4">
                     {currentGraph ? <GraphStats graph={currentGraph} onAttributesLoaded={setEntities} /> : null}

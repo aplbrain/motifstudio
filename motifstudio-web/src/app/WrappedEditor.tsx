@@ -12,9 +12,11 @@ B -> A
 `;
 
 export function WrappedEditor({
+    startValue,
     entityNames,
     onChange,
 }: {
+    startValue?: string;
     entityNames?: string[];
     onChange?: (value?: string) => void;
 }) {
@@ -87,7 +89,7 @@ export function WrappedEditor({
                 }
             }}
             defaultLanguage="motiflang"
-            defaultValue={_DEFAULT_EDITOR_CONTENTS}
+            defaultValue={startValue || _DEFAULT_EDITOR_CONTENTS}
             options={{
                 fontSize: 16,
                 fontLigatures: true,

@@ -8,14 +8,21 @@ import { HostListing, fetcher, BASE_URL } from "./api";
 /**
  * Dropdown to select a host graph from a list of available graphs.
  *
+ * @param {HostListing} startValue - Optional starting value for the dropdown.
  * @param {(graph?: HostListing) => void} onGraphChange - Optional callback
  *      function for when the selected graph changes. This is used mainly in
  *      the "Home" component to update the graph in top level app state.
  */
-export function GraphForm({ onGraphChange }: { onGraphChange?: (graph?: HostListing) => void }) {
+export function GraphForm({
+    startValue,
+    onGraphChange,
+}: {
+    startValue?: HostListing;
+    onGraphChange?: (graph?: HostListing) => void;
+}) {
     // Pull graphs from web server with axios:
     const { data, error, isLoading } = useSWR<{ hosts: HostListing[] }>(`${BASE_URL}/providers/hostlist`, fetcher);
-    const [selectedGraph, setSelectedGraph] = useState<HostListing>();
+    const [selectedGraph, setSelectedGraph] = useState<HostListing>(startValue || null);
     const [query, setQuery] = useState("");
 
     // Simple loading/error handling.
