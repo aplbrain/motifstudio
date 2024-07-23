@@ -17,7 +17,8 @@ import { getQueryParams, updateQueryParams } from "./queryparams";
  * of the graph, the motif query, and the entities in the graph.
  */
 export default function Home() {
-    const { host_id, motif, host_name } = getQueryParams();
+    const { host_id, motif, host_name } =
+        typeof window !== "undefined" ? getQueryParams() : { host_id: "", motif: "", host_name: "" };
     const [currentGraph, setCurrentGraph] = useState<HostListing | undefined>({
         id: host_id || "",
         name: host_name || "",
@@ -27,12 +28,16 @@ export default function Home() {
 
     function setSelectedGraph(graph: HostListing) {
         setCurrentGraph(graph);
-        updateQueryParams({ host_id: graph.id, host_name: graph.name });
+        if (typeof window !== "undefined") {
+            updateQueryParams({ host_id: graph.id, host_name: graph.name });
+        }
     }
 
     function updateMotifTest(value: string) {
         setQueryText(value);
-        updateQueryParams({ motif: value });
+        if (typeof window !== "undefined") {
+            updateQueryParams({ motif: value });
+        }
     }
 
     return (
