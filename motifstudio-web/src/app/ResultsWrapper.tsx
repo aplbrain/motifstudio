@@ -13,7 +13,7 @@ export function ResultsWrapper({ graph, query }: { graph: HostListing | null; qu
     }, [graph, query]);
 
     return (
-        <div className="flex flex-col gap-2 w-full h-full p-4 bg-white rounded-lg shadow-lg">
+        <div className="flex flex-col gap-2 w-full h-full p-4 bg-white rounded-lg shadow-lg dark:bg-gray-800">
             {!trigger ? (
                 <button
                     className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"

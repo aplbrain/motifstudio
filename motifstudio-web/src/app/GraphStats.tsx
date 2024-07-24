@@ -101,7 +101,7 @@ export function GraphStats({
 
     // Render the attributes and statistics.
     return graph ? (
-        <div className="flex w-full h-full p-4 bg-white rounded-lg shadow-lg">
+        <div className="flex w-full h-full p-4 bg-white rounded-lg shadow-lg dark:bg-gray-800">
             <div className="flex flex-col gap-2 w-full">
                 <h2 className="text-xl font-mono w-full">Graph Properties for {graph.name}</h2>
                 <hr className="my-2 w-full" />

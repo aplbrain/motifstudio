@@ -121,13 +121,13 @@ export function ResultsFetcher({ graph, query }: { graph: HostListing | null; qu
                 </div>
                 <div className="w-full flex gap-2">
                     <button
-                        className="bg-blue-500  hover:bg-blue-700 text-white font-bold px-4 rounded"
+                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold px-4 rounded"
                         onClick={() => downloadResults("json")}
                     >
                         JSON
                     </button>
                     <button
-                        className="bg-blue-500  hover:bg-blue-700 text-white font-bold px-4 rounded"
+                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold px-4 rounded"
                         onClick={() => downloadResults("csv")}
                     >
                         CSV
@@ -153,7 +153,7 @@ export function ResultsFetcher({ graph, query }: { graph: HostListing | null; qu
                     <tbody className="border-b-2">
                         {queryData?.motif_results?.length ? (
                             queryData.motif_results.slice(0, 10000).map((result: any, i: number) => (
-                                <tr key={i} className="border-b-2 hover:bg-gray-100">
+                                <tr key={i} className="border-b-2 hover:bg-gray-100 dark:hover:bg-gray-700">
                                     <a
                                         href={neuroglancerUrlFromHostVolumetricData(
                                             queryData?.host_volumetric_data?.uri,
