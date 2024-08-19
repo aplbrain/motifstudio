@@ -111,7 +111,7 @@ class MotifParseQueryResponse(_QueryResponseBase):
 
     query: str
     motif_entities: list[str]
-    motif_edges: list[str]
+    motif_edges: list[list[str]]
     motif_nodelink_json: str
     error: str | None = Field(
         None,

@@ -1,6 +1,7 @@
 """Routes that have to do with the actual graph queries."""
 
 import datetime
+import json
 import tempfile
 import time
 from typing import Annotated
@@ -266,7 +267,7 @@ def query_parse_motif(
             query=motif_count_query_request.query,
             motif_entities=[str(v) for v in motif.to_nx().nodes()],
             motif_edges=[[str(u), str(v)] for u, v in motif.to_nx().edges()],
-            motif_nodelink_json=nx.readwrite.node_link_data(motif.to_nx()),
+            motif_nodelink_json=json.dumps(nx.readwrite.node_link_data(motif.to_nx())),
             host_id=motif_count_query_request.host_id,
             response_time=datetime.datetime.now().isoformat(),
             response_duration_ms=(time.time() - tic) * 1000,
