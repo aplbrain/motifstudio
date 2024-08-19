@@ -1,4 +1,5 @@
 "use client";
+
 import { useState } from "react";
 
 import { Appbar } from "./Appbar";
@@ -8,6 +9,7 @@ import { HostListing } from "./api";
 import { GraphStats } from "./GraphStats";
 import { ResultsWrapper } from "./ResultsWrapper";
 import { getQueryParams, updateQueryParams } from "./queryparams";
+import { MotifVisualizer } from "./MotifVisualizer";
 
 /**
  * The main page of the application.
@@ -55,6 +57,7 @@ export default function Home() {
                     <GraphForm startValue={currentGraph} onGraphChange={setSelectedGraph} />
                 </div>
                 <div className="div flex w-full flex-col py-4 gap-4">
+                    {motif ? <MotifVisualizer motifSource={motif} graph={currentGraph} entities={entities} /> : null}
                     {currentGraph ? <GraphStats graph={currentGraph} onAttributesLoaded={setEntities} /> : null}
                     {currentGraph ? <ResultsWrapper graph={currentGraph} query={queryText} /> : null}
                 </div>

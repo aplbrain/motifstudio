@@ -100,10 +100,12 @@ export function WrappedEditor({
         });
     }
 
+    const prefersDark = typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches;
+
     return (
         <Editor
             height="40vh"
-            theme={window.matchMedia("(prefers-color-scheme: dark)").matches ? "motiftheme-dark" : "motiftheme"}
+            theme={prefersDark ? "motiftheme-dark" : "motiftheme"}
             beforeMount={handleEditorWillMount}
             onChange={(value, event) => {
                 if (onChange) {
