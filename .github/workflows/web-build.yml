@@ -19,10 +19,14 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v2
       with:
-        node-version: '14'
+        node-version: '22'
+
+    # Change directory to motifstudio-web
 
     - name: Install dependencies
       run: npm install
+      working-directory: motifstudio-web
 
     - name: Build Next.js application
       run: npm run build
+      working-directory: motifstudio-web
