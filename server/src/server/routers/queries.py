@@ -13,6 +13,8 @@ from ...models import (
     EdgeCountQueryResponse,
     MotifCountQueryRequest,
     MotifCountQueryResponse,
+    MotifParseQueryRequest,
+    MotifParseQueryResponse,
     MotifQueryRequest,
     MotifQueryResponse,
     VertexCountQueryRequest,
@@ -243,6 +245,39 @@ def query_count_motifs(
             query=motif_count_query_request.query,
             motif_count=-1,
             motif_entities=[],
+            host_id=motif_count_query_request.host_id,
+            response_time=datetime.datetime.now().isoformat(),
+            response_duration_ms=(time.time() - tic) * 1000,
+            error=str(e),
+        )
+
+
+@router.post("/motifs/_parse")
+def query_parse_motif(
+    motif_count_query_request: MotifParseQueryRequest,
+    commons: Annotated[HostProviderRouterGlobalDep, Depends(provider_router)],
+) -> MotifParseQueryResponse:
+    """Parse a motif and return the compiled query graph."""
+    tic = time.time()
+
+    try:
+        motif = Motif(motif_count_query_request.query)
+        return MotifParseQueryResponse(
+            query=motif_count_query_request.query,
+            motif_entities=[str(v) for v in motif.to_nx().nodes()],
+            motif_edges=[[str(u), str(v)] for u, v in motif.to_nx().edges()],
+            motif_nodelink_json=nx.readwrite.node_link_data(motif.to_nx()),
+            host_id=motif_count_query_request.host_id,
+            response_time=datetime.datetime.now().isoformat(),
+            response_duration_ms=(time.time() - tic) * 1000,
+            error=None,
+        )
+    except Exception as e:
+        return MotifParseQueryResponse(
+            query=motif_count_query_request.query,
+            motif_entities=[],
+            motif_edges=[],
+            motif_nodelink_json="",
             host_id=motif_count_query_request.host_id,
             response_time=datetime.datetime.now().isoformat(),
             response_duration_ms=(time.time() - tic) * 1000,

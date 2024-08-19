@@ -1,4 +1,5 @@
 """Models for the motif studio database and API."""
+
 from typing import Any, Literal
 from pydantic import BaseModel, Field
 
@@ -94,6 +95,28 @@ class EdgeCountQueryResponse(_QueryResponseBase):
     """A response with the edge count results for a host graph."""
 
     edge_count: int
+
+
+class MotifParseQueryRequest(_QueryRequestBase):
+    """A request to parse a motif query."""
+
+    query: str = Field(
+        ...,
+        description="The motif query to execute, in the DotMotif query language",
+    )
+
+
+class MotifParseQueryResponse(_QueryResponseBase):
+    """A response with the motif parse results for a host graph."""
+
+    query: str
+    motif_entities: list[str]
+    motif_edges: list[str]
+    motif_nodelink_json: str
+    error: str | None = Field(
+        None,
+        description="If an error occurred, a message describing the error.",
+    )
 
 
 class MotifCountQueryRequest(_QueryRequestBase):
