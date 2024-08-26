@@ -263,11 +263,18 @@ def query_parse_motif(
 
     try:
         motif = Motif(motif_count_query_request.query)
+        gnx = motif.to_nx()
+        for node, constraints_dict in motif.list_node_constraints().items():
+            for constraint, value in constraints_dict.items():
+                gnx.nodes[node][constraint] = value
+        for node, constraints_dict in motif.list_dynamic_node_constraints().items():
+            for constraint, value in constraints_dict.items():
+                gnx.nodes[node]["d" + constraint] = value
         return MotifParseQueryResponse(
             query=motif_count_query_request.query,
             motif_entities=[str(v) for v in motif.to_nx().nodes()],
             motif_edges=[[str(u), str(v)] for u, v in motif.to_nx().edges()],
-            motif_nodelink_json=json.dumps(nx.readwrite.node_link_data(motif.to_nx())),
+            motif_nodelink_json=json.dumps(nx.readwrite.node_link_data(gnx)),
             host_id=motif_count_query_request.host_id,
             response_time=datetime.datetime.now().isoformat(),
             response_duration_ms=(time.time() - tic) * 1000,
