@@ -179,7 +179,7 @@ export function ResultsFetcher({ graph, query }: { graph: HostListing | null; qu
                         ) : (
                             <div>
                                 {queryData?.error ? (
-                                    <div className="text-red-500">{errorText}</div>
+                                    <div className="text-red-500">{errorText.toString()}</div>
                                 ) : (
                                     <div>No results</div>
                                 )}
