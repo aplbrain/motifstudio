@@ -3,5 +3,6 @@ networkx
 fastapi[all]
 uvicorn[standard]
 dotmotif[neo4j]
+grand-cypher
 pandas
 git+https://github.com/aplbrain/grand-cypher-io

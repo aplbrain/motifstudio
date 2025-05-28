@@ -9,6 +9,7 @@ from typing import Annotated
 import networkx as nx
 from fastapi import APIRouter, Depends, HTTPException, Header, Response
 from dotmotif import Motif
+import grandcypher
 from ...models import (
     EdgeCountQueryRequest,
     EdgeCountQueryResponse,
@@ -26,6 +27,7 @@ from ...models import (
     DownloadGraphQueryResponse,
     _GraphFormats,
 )
+from ...host_provider.host_provider.host_provider import NetworkXHostProvider
 from ..commons import HostProviderRouterGlobalDep, provider_router
 
 router = APIRouter(
@@ -230,20 +232,55 @@ def query_count_motifs(
         )
 
     try:
-        count = provider.get_motif_count(uri, motif_count_query_request.query)
-        motif = Motif(motif_count_query_request.query)
-        return MotifCountQueryResponse(
-            query=motif_count_query_request.query,
-            motif_count=count,
-            motif_entities=[str(v) for v in motif.to_nx().nodes()],
-            host_id=motif_count_query_request.host_id,
-            response_time=datetime.datetime.now().isoformat(),
-            response_duration_ms=(time.time() - tic) * 1000,
-            error=None,
-        )
+        # Handle different query types
+        if motif_count_query_request.query_type == "cypher":
+            # For Cypher count queries, we need to execute and count results
+            # Check if provider supports NetworkX graphs
+            if isinstance(provider, NetworkXHostProvider):
+                host_graph = provider.get_networkx_graph(uri)
+                results = grandcypher.GrandCypher(host_graph).run(motif_count_query_request.query)
+
+                # Handle GrandCypher result format: {"entity": [res1, res2, res3], "entity2": [res1, res2, res3]}
+                if isinstance(results, dict) and results:
+                    # Get the length of the first entity's results to determine count
+                    first_key = next(iter(results.keys()))
+                    count = len(results[first_key]) if first_key in results else 0
+                    motif_entities = list(results.keys())
+                else:
+                    count = 0
+                    motif_entities = []
+
+                return MotifCountQueryResponse(
+                    query=motif_count_query_request.query,
+                    query_type=motif_count_query_request.query_type,
+                    motif_count=count,
+                    motif_entities=motif_entities,
+                    host_id=motif_count_query_request.host_id,
+                    response_time=datetime.datetime.now().isoformat(),
+                    response_duration_ms=(time.time() - tic) * 1000,
+                    error=None,
+                )
+            else:
+                # Provider doesn't support NetworkX graphs for Cypher queries
+                raise ValueError(f"Provider {provider.type} does not support Cypher queries")
+        else:
+            # Default to DotMotif counting
+            count = provider.get_motif_count(uri, motif_count_query_request.query)
+            motif = Motif(motif_count_query_request.query)
+            return MotifCountQueryResponse(
+                query=motif_count_query_request.query,
+                query_type=motif_count_query_request.query_type,
+                motif_count=count,
+                motif_entities=[str(v) for v in motif.to_nx().nodes()],
+                host_id=motif_count_query_request.host_id,
+                response_time=datetime.datetime.now().isoformat(),
+                response_duration_ms=(time.time() - tic) * 1000,
+                error=None,
+            )
     except Exception as e:
         return MotifCountQueryResponse(
             query=motif_count_query_request.query,
+            query_type=motif_count_query_request.query_type,
             motif_count=-1,
             motif_entities=[],
             host_id=motif_count_query_request.host_id,
@@ -262,27 +299,46 @@ def query_parse_motif(
     tic = time.time()
 
     try:
-        motif = Motif(motif_count_query_request.query)
-        gnx = motif.to_nx()
-        for node, constraints_dict in motif.list_node_constraints().items():
-            for constraint, value in constraints_dict.items():
-                gnx.nodes[node][constraint] = value
-        for node, constraints_dict in motif.list_dynamic_node_constraints().items():
-            for constraint, value in constraints_dict.items():
-                gnx.nodes[node]["d" + constraint] = value
-        return MotifParseQueryResponse(
-            query=motif_count_query_request.query,
-            motif_entities=[str(v) for v in motif.to_nx().nodes()],
-            motif_edges=[[str(u), str(v)] for u, v in motif.to_nx().edges()],
-            motif_nodelink_json=json.dumps(nx.readwrite.node_link_data(gnx)),
-            host_id=motif_count_query_request.host_id,
-            response_time=datetime.datetime.now().isoformat(),
-            response_duration_ms=(time.time() - tic) * 1000,
-            error=None,
-        )
+        # Handle different query types
+        if motif_count_query_request.query_type == "cypher":
+            # For Cypher queries, we can't create a traditional motif visualization
+            # since Cypher is more general. Return basic structure
+            return MotifParseQueryResponse(
+                query=motif_count_query_request.query,
+                query_type=motif_count_query_request.query_type,
+                motif_entities=[],
+                motif_edges=[],
+                motif_nodelink_json="{}",
+                host_id=motif_count_query_request.host_id,
+                response_time=datetime.datetime.now().isoformat(),
+                response_duration_ms=(time.time() - tic) * 1000,
+                error=None,
+            )
+        else:
+            # Default to DotMotif parsing
+            motif = Motif(motif_count_query_request.query)
+            gnx = motif.to_nx()
+            for node, constraints_dict in motif.list_node_constraints().items():
+                for constraint, value in constraints_dict.items():
+                    gnx.nodes[node][constraint] = value
+            for node, constraints_dict in motif.list_dynamic_node_constraints().items():
+                for constraint, value in constraints_dict.items():
+                    gnx.nodes[node]["d" + constraint] = value
+            return MotifParseQueryResponse(
+                query=motif_count_query_request.query,
+                query_type=motif_count_query_request.query_type,
+                motif_entities=[str(v) for v in motif.to_nx().nodes()],
+                motif_edges=[[str(u), str(v)] for u, v in motif.to_nx().edges()],
+                motif_nodelink_json=json.dumps(nx.readwrite.node_link_data(gnx)),
+                host_id=motif_count_query_request.host_id,
+                response_time=datetime.datetime.now().isoformat(),
+                response_duration_ms=(time.time() - tic) * 1000,
+                error=None,
+            )
     except Exception as e:
         return MotifParseQueryResponse(
             query=motif_count_query_request.query,
+            query_type=motif_count_query_request.query_type,
             motif_entities=[],
             motif_edges=[],
             motif_nodelink_json="",
@@ -309,7 +365,8 @@ def query_motifs(
     listing = commons.get_host_listing_from_id(motif_query_request.host_id)
     volumetric_data = None
     try:
-        volumetric_data = listing.volumetric_data
+        if listing is not None:
+            volumetric_data = listing.volumetric_data
     except Exception as e:
         print(f"Failed to get volumetric data: {e}")
     if uri is None:
@@ -326,28 +383,85 @@ def query_motifs(
         )
 
     try:
-        motif = Motif(motif_query_request.query)
-        results = provider.get_motifs(
-            uri,
-            motif_query_request.query,
-            aggregation_type=motif_query_request.aggregation_type,
-        )
-        count = len(results)
-        return MotifQueryResponse(
-            query=motif_query_request.query,
-            motif_count=count,
-            motif_results=results,
-            motif_entities=[str(v) for v in motif.to_nx().nodes()],
-            aggregation_type=motif_query_request.aggregation_type,
-            host_id=motif_query_request.host_id,
-            host_volumetric_data=volumetric_data,
-            response_time=datetime.datetime.now().isoformat(),
-            response_duration_ms=(time.time() - tic) * 1000,
-            error=None,
-        )
+        # Handle different query types
+        if motif_query_request.query_type == "cypher":
+            # For Cypher queries, we need to get the host graph first
+            # Check if provider supports NetworkX graphs
+            if isinstance(provider, NetworkXHostProvider):
+                host_graph = provider.get_networkx_graph(uri)
+                results = grandcypher.GrandCypher(host_graph).run(motif_query_request.query)
+
+                # Convert GrandCypher results to expected format
+                # GrandCypher returns: {"entity": [res1, res2, res3], "entity2": [res1, res2, res3]}
+                # We need to convert to: [{"entity": res1, "entity2": res1}, {"entity": res2, "entity2": res2}, ...]
+                # res can be any type, so we use JSON serialization for the 'id' field
+                formatted_results = []
+                motif_entities = []
+
+                if isinstance(results, dict) and results:
+                    motif_entities = list(results.keys())
+                    # Get the length of results (assuming all entities have same number of results)
+                    if motif_entities:
+                        first_key = motif_entities[0]
+                        result_count = len(results[first_key]) if first_key in results else 0
+
+                        # Transform the results into the expected format
+                        for i in range(result_count):
+                            result_row = {}
+                            for entity in motif_entities:
+                                if entity in results and i < len(results[entity]):
+                                    # JSON serialize the result to handle any data type
+                                    result_row[entity] = {
+                                        "id": json.dumps(results[entity][i])
+                                        if results[entity][i] is not None
+                                        else "null"
+                                    }
+                            formatted_results.append(result_row)
+
+                count = len(formatted_results)
+
+                return MotifQueryResponse(
+                    query=motif_query_request.query,
+                    query_type=motif_query_request.query_type,
+                    motif_count=count,
+                    motif_results=formatted_results,
+                    motif_entities=motif_entities,
+                    aggregation_type=motif_query_request.aggregation_type,
+                    host_id=motif_query_request.host_id,
+                    host_volumetric_data=volumetric_data,
+                    response_time=datetime.datetime.now().isoformat(),
+                    response_duration_ms=(time.time() - tic) * 1000,
+                    error=None,
+                )
+            else:
+                # Provider doesn't support NetworkX graphs for Cypher queries
+                raise ValueError(f"Provider {provider.type} does not support Cypher queries")
+        else:
+            # Default to DotMotif for backward compatibility
+            motif = Motif(motif_query_request.query)
+            results = provider.get_motifs(
+                uri,
+                motif_query_request.query,
+                aggregation_type=motif_query_request.aggregation_type,
+            )
+            count = len(results)
+            return MotifQueryResponse(
+                query=motif_query_request.query,
+                query_type=motif_query_request.query_type,
+                motif_count=count,
+                motif_results=results,
+                motif_entities=[str(v) for v in motif.to_nx().nodes()],
+                aggregation_type=motif_query_request.aggregation_type,
+                host_id=motif_query_request.host_id,
+                host_volumetric_data=volumetric_data,
+                response_time=datetime.datetime.now().isoformat(),
+                response_duration_ms=(time.time() - tic) * 1000,
+                error=None,
+            )
     except Exception as e:
         return MotifQueryResponse(
             query=motif_query_request.query,
+            query_type=motif_query_request.query_type,
             motif_count=-1,
             motif_results=[],
             motif_entities=[],

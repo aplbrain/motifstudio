@@ -4,15 +4,27 @@ import { HostListing, bodiedFetcher, BASE_URL, neuroglancerUrlFromHostVolumetric
 import { useDebounce } from "./useDebounce";
 import { LoadingSpinner } from "./LoadingSpinner";
 
-export function ResultsFetcher({ graph, query }: { graph: HostListing | null; query: string }) {
+export function ResultsFetcher({
+    graph,
+    query,
+    queryType,
+}: {
+    graph: HostListing | null;
+    query: string;
+    queryType: "dotmotif" | "cypher";
+}) {
     const debouncedQuery = useDebounce(query, 500);
 
     const {
         data: queryData,
         error: queryError,
         isLoading: queryIsLoading,
-    } = useSWR([`${BASE_URL}/queries/motifs`, graph?.id, debouncedQuery], () =>
-        bodiedFetcher(`${BASE_URL}/queries/motifs`, { host_id: graph?.id, query: debouncedQuery })
+    } = useSWR([`${BASE_URL}/queries/motifs`, graph?.id, debouncedQuery, queryType], () =>
+        bodiedFetcher(`${BASE_URL}/queries/motifs`, {
+            host_id: graph?.id,
+            query: debouncedQuery,
+            query_type: queryType,
+        })
     );
 
     if (queryIsLoading) return <LoadingSpinner />;
@@ -63,7 +75,28 @@ export function ResultsFetcher({ graph, query }: { graph: HostListing | null; qu
             a.click();
         } else if (format === "csv") {
             const csv = queryData.motif_results.map((result: any) => {
-                return queryData.motif_entities.map((entity: string) => result[entity].id).join(",");
+                return queryData.motif_entities
+                    .map((entity: string) => {
+                        let value = result[entity].id;
+                        // For JSON-serialized values, try to parse them for CSV export
+                        if (typeof value === "string") {
+                            try {
+                                const parsed = JSON.parse(value);
+                                // Use the parsed value if it's simple, otherwise keep the JSON string
+                                if (typeof parsed === "string" || typeof parsed === "number") {
+                                    value = parsed.toString();
+                                }
+                            } catch (e) {
+                                // If parsing fails, use as-is
+                            }
+                        }
+                        // Escape commas and quotes for CSV
+                        if (typeof value === "string" && (value.includes(",") || value.includes('"'))) {
+                            value = `"${value.replace(/"/g, '""')}"`;
+                        }
+                        return value;
+                    })
+                    .join(",");
             });
             const blob = new Blob([csv.join("\n")], { type: "text/csv" });
             const url = URL.createObjectURL(blob);
@@ -158,7 +191,19 @@ export function ResultsFetcher({ graph, query }: { graph: HostListing | null; qu
                                         href={neuroglancerUrlFromHostVolumetricData(
                                             queryData?.host_volumetric_data?.uri,
                                             queryData?.host_volumetric_data?.other_channels || [],
-                                            Object.values(result).map((v: any) => v?.__segmentation_id__ || v.id)
+                                            Object.values(result).map((v: any) => {
+                                                let id = v?.__segmentation_id__ || v.id;
+                                                // For JSON-serialized values, try to parse them
+                                                if (typeof id === "string") {
+                                                    try {
+                                                        const parsed = JSON.parse(id);
+                                                        return parsed;
+                                                    } catch (e) {
+                                                        return id;
+                                                    }
+                                                }
+                                                return id;
+                                            })
                                         )}
                                         target="_blank"
                                         rel="noreferrer"
@@ -166,11 +211,38 @@ export function ResultsFetcher({ graph, query }: { graph: HostListing | null; qu
                                         <b>View</b>
                                     </a>
                                     {queryData?.motif_entities ? (
-                                        queryData.motif_entities.map((entity: string, j: number) => (
-                                            <td key={j} className="truncate max-w-xs" title={result[entity].id}>
-                                                {result[entity].id}
-                                            </td>
-                                        ))
+                                        queryData.motif_entities.map((entity: string, j: number) => {
+                                            let displayValue = result[entity].id;
+                                            let titleValue = result[entity].id;
+
+                                            // For Cypher queries, the id field contains JSON-serialized data
+                                            // Try to parse and display it nicely
+                                            if (typeof displayValue === "string") {
+                                                try {
+                                                    const parsed = JSON.parse(displayValue);
+                                                    // If it's a simple value, display it directly
+                                                    if (typeof parsed === "string" || typeof parsed === "number") {
+                                                        displayValue = parsed.toString();
+                                                    } else {
+                                                        // For complex objects, show a truncated JSON representation
+                                                        displayValue = JSON.stringify(parsed);
+                                                        if (displayValue.length > 50) {
+                                                            displayValue = displayValue.substring(0, 47) + "...";
+                                                        }
+                                                    }
+                                                    titleValue = JSON.stringify(parsed, null, 2);
+                                                } catch (e) {
+                                                    // If parsing fails, display as-is
+                                                    displayValue = displayValue;
+                                                }
+                                            }
+
+                                            return (
+                                                <td key={j} className="truncate max-w-xs" title={titleValue}>
+                                                    {displayValue}
+                                                </td>
+                                            );
+                                        })
                                     ) : (
                                         <div></div>
                                     )}

@@ -6,11 +6,13 @@
  * @returns {string} host_id - The ID of the host graph.
  * @returns {string} host_name - The name of the host graph.
  * @returns {string} motif - The motif query string.
+ * @returns {string} query_type - The type of query language (dotmotif or cypher).
  */
 export function getQueryParams(): {
     host_id: string;
     host_name: string;
     motif: string;
+    query_type: string;
 } {
     const search = window.location.search;
     const params = new URLSearchParams(search);
@@ -18,6 +20,7 @@ export function getQueryParams(): {
         host_id: decodeURIComponent(params.get("host_id") || ""),
         host_name: decodeURIComponent(params.get("host_name") || ""),
         motif: decodeURIComponent(params.get("motif") || ""),
+        query_type: decodeURIComponent(params.get("query_type") || "dotmotif"),
     };
 }
 
@@ -31,6 +34,7 @@ export function getQueryParams(): {
  * @param {string} params.host_id - The ID of the host graph.
  * @param {string} params.host_name - The name of the host graph.
  * @param {string} params.motif - The motif query string.
+ * @param {string} params.query_type - The type of query language (dotmotif or cypher).
  */
 export function updateQueryParams(params: { [key: string]: string }) {
     const search = new URLSearchParams(window.location.search);
