@@ -12,7 +12,7 @@ from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .commons import provider_router
-from .routers import host_providers, queries
+from .routers import host_providers, queries, uploads
 
 __version__ = "0.1.0"
 
@@ -26,6 +26,7 @@ app.add_middleware(
 )
 app.include_router(host_providers.router, dependencies=[Depends(provider_router)])
 app.include_router(queries.router, dependencies=[Depends(provider_router)])
+app.include_router(uploads.router, dependencies=[Depends(provider_router)])
 
 
 @app.get("/")

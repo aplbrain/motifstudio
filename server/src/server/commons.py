@@ -76,6 +76,7 @@ class HostProviderRouterGlobalDep:
             config = json_filepath_or_dict
         self.host_provider_router = HostProviderRouter(_providers_from_json_config(config["providers"]))
         self.all_hosts = _hosts_from_json_config(config["hosts"])
+        self.temporary_hosts = []  # Private list for uploaded temporary files
         self.host_provider_router.validate_all_hosts(self.all_hosts)
 
     def get_uri_from_id(self, id: str) -> str | None:
@@ -88,9 +89,16 @@ class HostProviderRouterGlobalDep:
             str | None: The URI of the host, or None if it doesn't exist.
 
         """
+        # Check public hosts first
         for host in self.all_hosts:
             if host.id == id:
                 return host.uri
+
+        # Check temporary hosts (unlisted)
+        for host in self.temporary_hosts:
+            if host.id == id:
+                return host.uri
+
         return None
 
     def get_host_listing_from_id(self, id: str) -> HostListing | None:
@@ -103,9 +111,16 @@ class HostProviderRouterGlobalDep:
             HostListing | None: The HostListing of the host, or None if it doesn't exist.
 
         """
+        # Check public hosts first
         for host in self.all_hosts:
             if host.id == id:
                 return host
+
+        # Check temporary hosts (unlisted)
+        for host in self.temporary_hosts:
+            if host.id == id:
+                return host
+
         return None
 
     def get_name_from_uri(self, uri: str) -> str | None:
@@ -118,9 +133,16 @@ class HostProviderRouterGlobalDep:
             str | None: The name of the host, or None if it doesn't exist.
 
         """
+        # Check public hosts first
         for host in self.all_hosts:
             if host.uri == uri:
                 return host.name
+
+        # Check temporary hosts (unlisted)
+        for host in self.temporary_hosts:
+            if host.uri == uri:
+                return host.name
+
         return None
 
     def all_providers(self) -> dict[HostProviderID, HostProvider]:
@@ -134,6 +156,35 @@ class HostProviderRouterGlobalDep:
 
         """
         return self.host_provider_router.all_providers()
+
+    def add_temporary_host(self, host: HostListing) -> None:
+        """Add a temporary (unlisted) host.
+
+        These hosts are not visible in the public host list but can be
+        accessed directly if you know their ID.
+
+        Arguments:
+            host (HostListing): The host to add.
+
+        Returns:
+            None
+        """
+        self.temporary_hosts.append(host)
+
+    def remove_temporary_host(self, host_id: str) -> bool:
+        """Remove a temporary host by ID.
+
+        Arguments:
+            host_id (str): The ID of the host to remove.
+
+        Returns:
+            bool: True if the host was found and removed, False otherwise.
+        """
+        for i, host in enumerate(self.temporary_hosts):
+            if host.id == host_id:
+                del self.temporary_hosts[i]
+                return True
+        return False
 
 
 @lru_cache()

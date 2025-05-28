@@ -4,6 +4,7 @@ from .host_provider import (
     FilesystemGraphHostProvider,
     S3GraphMLHostProvider,
     OpenCypherHostProvider,
+    TemporaryGraphHostProvider,
 )
 
 from ..models import HostListing, HostProviderID
@@ -74,6 +75,7 @@ provider_name_map = {
     "FilesystemGraphHostProvider": FilesystemGraphHostProvider,
     "S3GraphMLHostProvider": S3GraphMLHostProvider,
     "OpenCypherHostProvider": OpenCypherHostProvider,
+    "TemporaryGraphHostProvider": TemporaryGraphHostProvider,
 }
 
 __all__ = [

@@ -208,3 +208,70 @@ class DownloadGraphQueryResponse(_QueryResponseBase):
         None,
         description="If an error occurred, a message describing the error.",
     )
+
+
+class GraphUploadResponse(BaseModel):
+    """A response to a graph upload request."""
+
+    temp_id: str = Field(
+        ...,
+        description="The temporary ID of the uploaded graph."
+    )
+    original_filename: str = Field(
+        ...,
+        description="The original filename of the uploaded graph."
+    )
+    file_size: int = Field(
+        ...,
+        description="The size of the uploaded file in bytes."
+    )
+    success: bool = Field(
+        ...,
+        description="Whether the upload was successful."
+    )
+    error: str | None = Field(
+        None,
+        description="If an error occurred, a message describing the error."
+    )
+
+
+class TemporaryHostListing(BaseModel):
+    """A listing for a temporarily uploaded host graph."""
+
+    temp_id: str = Field(
+        ...,
+        description="The temporary ID of the uploaded graph."
+    )
+    name: str = Field(
+        ...,
+        description="The display name for the temporary graph."
+    )
+    original_filename: str = Field(
+        ...,
+        description="The original filename of the uploaded graph."
+    )
+    file_size: int = Field(
+        ...,
+        description="The size of the uploaded file in bytes."
+    )
+    created_at: str = Field(
+        ...,
+        description="When the file was uploaded."
+    )
+
+
+class GraphUploadCleanupResponse(BaseModel):
+    """A response to a graph upload cleanup request."""
+
+    temp_id: str = Field(
+        ...,
+        description="The temporary ID of the graph that was cleaned up."
+    )
+    success: bool = Field(
+        ...,
+        description="Whether the cleanup was successful."
+    )
+    error: str | None = Field(
+        None,
+        description="If an error occurred, a message describing the error."
+    )
