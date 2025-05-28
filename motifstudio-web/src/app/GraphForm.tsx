@@ -4,6 +4,7 @@ import { Combobox } from "@headlessui/react";
 import useSWR from "swr";
 import { DatabaseIcon } from "./DatabaseIcon";
 import { HostListing, fetcher, BASE_URL } from "./api";
+import { useClientOnly } from "./hooks/useClientOnly";
 
 /**
  * Dropdown to select a host graph from a list of available graphs.
@@ -24,6 +25,7 @@ export function GraphForm({
     const { data, error, isLoading } = useSWR<{ hosts: HostListing[] }>(`${BASE_URL}/providers/hostlist`, fetcher);
     const [selectedGraph, setSelectedGraph] = useState<HostListing | undefined>(startValue);
     const [query, setQuery] = useState("");
+    const isClient = useClientOnly();
 
     // Update selectedGraph when startValue changes
     useEffect(() => {
@@ -33,6 +35,8 @@ export function GraphForm({
     // Simple loading/error handling.
     // Note that if the host cannot be reached, this is likely the first place
     // that the user will see an error message.
+    // Use client-only check to avoid hydration mismatch
+    if (!isClient) return <div>Loading...</div>;
     if (isLoading) return <div>Loading...</div>;
     if (error) return <div>Error: {JSON.stringify(error)}</div>;
     if (!data) return <div>No data</div>;
