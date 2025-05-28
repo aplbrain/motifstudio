@@ -2,6 +2,7 @@
 import { useEffect } from "react";
 import useSWR from "swr";
 import { HostListing, bodiedFetcher, BASE_URL } from "./api";
+import { useClientOnly } from "./hooks/useClientOnly";
 
 /**
  * Display graph statistics and attributes when a host is selected.
@@ -23,6 +24,8 @@ export function GraphStats({
     graph: HostListing;
     onAttributesLoaded?: (attributes: { [key: string]: string }) => void;
 }) {
+    const isClient = useClientOnly();
+
     // Fetch graph statistics and attributes.
     // TODO: Perhaps these should all go in one combined query?
     const {
@@ -64,6 +67,8 @@ export function GraphStats({
         }
     }, [vertAttrData?.attributes, onAttributesLoaded]);
 
+    // Use client-only check to avoid hydration mismatch
+    if (!isClient) return <div>Loading...</div>;
     if (vertIsLoading || edgeIsLoading) return <div>Loading...</div>;
     if (vertError || edgeError) return <div>Error: {vertError}</div>;
     if (!vertData || !edgeData) return <div>No data</div>;

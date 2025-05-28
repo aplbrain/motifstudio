@@ -66,7 +66,7 @@ export const MotifVisualizer = ({ motifSource }: { motifSource: string }) => {
     }
 
     if (queryIsLoading) {
-        return <div>Loading motif...</div>;
+        return <div>Loading...</div>;
     }
 
     if (!queryData) {

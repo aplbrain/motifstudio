@@ -20,6 +20,7 @@ export function getQueryParams(): {
         motif: decodeURIComponent(params.get("motif") || ""),
     };
 }
+
 /**
  * Update the query parameters in the URL without overwriting.
  *
