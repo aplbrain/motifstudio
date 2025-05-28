@@ -50,10 +50,10 @@ export const bodiedFetcher = async (url: string, body: any, ...args: any[]) => {
     });
 };
 
-export type HostListing = { 
+export type HostListing = {
     id: string;
     uri: string;
-    name: string; 
+    name: string;
     provider: { [key: string]: string };
     volumetric_data?: { [key: string]: any };
 };

@@ -23,7 +23,7 @@ class TemporaryFileInfo(NamedTuple):
 
 class TemporaryGraphHostProvider(SingleFileGraphHostProvider):
     """A Host Provider that can handle temporarily uploaded graph files.
-    
+
     Files are automatically expired after 14 days and cleaned up.
     """
 
@@ -31,7 +31,7 @@ class TemporaryGraphHostProvider(SingleFileGraphHostProvider):
         """Initialize the provider.
 
         Arguments:
-            temp_dir (str): The temporary directory for uploaded files. 
+            temp_dir (str): The temporary directory for uploaded files.
                           If None, uses system temp directory.
             expiration_days (int): Number of days after which files expire (default: 14).
 
@@ -41,16 +41,16 @@ class TemporaryGraphHostProvider(SingleFileGraphHostProvider):
         self.temp_dir = temp_dir or tempfile.gettempdir()
         self.temp_dir = os.path.join(self.temp_dir, "motifstudio_uploads")
         os.makedirs(self.temp_dir, exist_ok=True)
-        
+
         self.expiration_days = expiration_days
         self.expiration_seconds = expiration_days * 24 * 60 * 60
-        
+
         # Keep track of uploaded files with metadata
         self._uploaded_files: Dict[str, TemporaryFileInfo] = {}
-        
+
         # Load existing files from disk on startup
         self._load_existing_files()
-        
+
         # Clean up expired files
         self._cleanup_expired_files()
 
@@ -63,7 +63,7 @@ class TemporaryGraphHostProvider(SingleFileGraphHostProvider):
         """Return True if the URI is a temporary file URI."""
         if not uri.startswith("temp://"):
             return False
-        
+
         # Extract the temp_id and check if it exists and is not expired
         temp_id = uri[7:]  # Remove "temp://" prefix
         if temp_id in self._uploaded_files:
@@ -74,7 +74,7 @@ class TemporaryGraphHostProvider(SingleFileGraphHostProvider):
                 self._cleanup_single_file(temp_id)
                 return False
             return super().accepts(file_info.filepath) or file_info.filepath.endswith('.csv')
-        
+
         return False  # Unknown temp ID
 
     def store_file(self, file_content: bytes, original_filename: str) -> str:
@@ -89,25 +89,25 @@ class TemporaryGraphHostProvider(SingleFileGraphHostProvider):
         """
         # Generate a unique ID
         temp_id = str(uuid.uuid4())
-        
+
         # Determine file extension from original filename
         file_ext = Path(original_filename).suffix
         if not file_ext:
             # Try to determine from content or default to .graphml
             file_ext = ".graphml"
-        
+
         # Create the temporary file path
         temp_filename = f"{temp_id}{file_ext}"
         temp_filepath = os.path.join(self.temp_dir, temp_filename)
-        
+
         # Write the file
         with open(temp_filepath, "wb") as f:
             f.write(file_content)
-        
+
         # Calculate expiration time
         created_at = time.time()
         expires_at = created_at + self.expiration_seconds
-        
+
         # Store the mapping with metadata
         file_info = TemporaryFileInfo(
             temp_id=temp_id,
@@ -117,10 +117,10 @@ class TemporaryGraphHostProvider(SingleFileGraphHostProvider):
             expires_at=expires_at
         )
         self._uploaded_files[temp_id] = file_info
-        
+
         # Save metadata to disk for persistence
         self._save_metadata()
-        
+
         return temp_id
 
     def get_networkx_graph(self, uri: str) -> nx.Graph:
@@ -134,26 +134,26 @@ class TemporaryGraphHostProvider(SingleFileGraphHostProvider):
         """
         if not uri.startswith("temp://"):
             raise ValueError(f"Invalid temporary URI: {uri}")
-        
+
         temp_id = uri[7:]  # Remove "temp://" prefix
-        
+
         if temp_id not in self._uploaded_files:
             raise FileNotFoundError(f"Temporary file not found for ID: {temp_id}")
-        
+
         file_info = self._uploaded_files[temp_id]
-        
+
         # Check if file has expired
         if time.time() > file_info.expires_at:
             self._cleanup_single_file(temp_id)
             raise FileNotFoundError(f"Temporary file has expired for ID: {temp_id}")
-        
+
         if not os.path.exists(file_info.filepath):
             raise FileNotFoundError(f"Temporary file does not exist: {file_info.filepath}")
-        
+
         # Handle CSV files (assuming edgelist format)
         if file_info.filepath.endswith('.csv'):
             return self._read_csv_edgelist(file_info.filepath)
-        
+
         return super().get_networkx_graph(file_info.filepath)
 
     def _read_csv_edgelist(self, filepath: str) -> nx.Graph:
@@ -168,32 +168,32 @@ class TemporaryGraphHostProvider(SingleFileGraphHostProvider):
         try:
             # Try to read as CSV
             df = pd.read_csv(filepath)
-            
+
             # Assume first two columns are source and target
             if len(df.columns) < 2:
                 raise ValueError("CSV file must have at least 2 columns for source and target nodes")
-            
+
             # Create graph from edgelist
             G = nx.Graph()
-            
+
             # Get column names
             source_col = df.columns[0]
             target_col = df.columns[1]
-            
+
             # Add edges
             for _, row in df.iterrows():
                 source = row[source_col]
                 target = row[target_col]
-                
+
                 # Add edge with any additional attributes
                 edge_attrs = {}
                 for col in df.columns[2:]:
                     edge_attrs[col] = row[col]
-                
+
                 G.add_edge(source, target, **edge_attrs)
-            
+
             return G
-            
+
         except Exception as e:
             # If CSV reading fails, try as plain text edgelist
             try:
@@ -212,9 +212,9 @@ class TemporaryGraphHostProvider(SingleFileGraphHostProvider):
         """
         if temp_id not in self._uploaded_files:
             return False
-        
+
         file_info = self._uploaded_files[temp_id]
-        
+
         try:
             if os.path.exists(file_info.filepath):
                 os.remove(file_info.filepath)
@@ -254,17 +254,17 @@ class TemporaryGraphHostProvider(SingleFileGraphHostProvider):
         """
         if temp_id not in self._uploaded_files:
             return None
-        
+
         file_info = self._uploaded_files[temp_id]
-        
+
         # Check if file has expired
         if time.time() > file_info.expires_at:
             self._cleanup_single_file(temp_id)
             return None
-        
+
         if not os.path.exists(file_info.filepath):
             return None
-        
+
         stat = os.stat(file_info.filepath)
         return {
             "temp_id": temp_id,
@@ -279,14 +279,14 @@ class TemporaryGraphHostProvider(SingleFileGraphHostProvider):
     def _load_existing_files(self):
         """Load existing temporary files from disk metadata."""
         metadata_file = os.path.join(self.temp_dir, "metadata.json")
-        
+
         if not os.path.exists(metadata_file):
             return
-        
+
         try:
             with open(metadata_file, "r") as f:
                 data = json.load(f)
-                
+
             for temp_id, file_data in data.items():
                 # Verify the file still exists
                 if os.path.exists(file_data["filepath"]):
@@ -298,14 +298,14 @@ class TemporaryGraphHostProvider(SingleFileGraphHostProvider):
                         expires_at=file_data["expires_at"]
                     )
                     self._uploaded_files[temp_id] = file_info
-                    
+
         except (json.JSONDecodeError, KeyError, OSError) as e:
             print(f"Warning: Failed to load temporary files metadata: {e}")
 
     def _save_metadata(self):
         """Save metadata about temporary files to disk."""
         metadata_file = os.path.join(self.temp_dir, "metadata.json")
-        
+
         try:
             data = {}
             for temp_id, file_info in self._uploaded_files.items():
@@ -315,10 +315,10 @@ class TemporaryGraphHostProvider(SingleFileGraphHostProvider):
                     "created_at": file_info.created_at,
                     "expires_at": file_info.expires_at
                 }
-            
+
             with open(metadata_file, "w") as f:
                 json.dump(data, f, indent=2)
-                
+
         except OSError as e:
             print(f"Warning: Failed to save temporary files metadata: {e}")
 
@@ -326,14 +326,14 @@ class TemporaryGraphHostProvider(SingleFileGraphHostProvider):
         """Clean up expired temporary files."""
         current_time = time.time()
         expired_ids = []
-        
+
         for temp_id, file_info in self._uploaded_files.items():
             if current_time > file_info.expires_at:
                 expired_ids.append(temp_id)
-        
+
         for temp_id in expired_ids:
             self._cleanup_single_file(temp_id)
-        
+
         # Save metadata after cleanup
         if expired_ids:
             self._save_metadata()
@@ -342,13 +342,13 @@ class TemporaryGraphHostProvider(SingleFileGraphHostProvider):
         """Clean up a single temporary file without saving metadata."""
         if temp_id not in self._uploaded_files:
             return
-        
+
         file_info = self._uploaded_files[temp_id]
-        
+
         try:
             if os.path.exists(file_info.filepath):
                 os.remove(file_info.filepath)
         except OSError as e:
             print(f"Warning: Failed to remove temporary file {file_info.filepath}: {e}")
-        
+
         del self._uploaded_files[temp_id]

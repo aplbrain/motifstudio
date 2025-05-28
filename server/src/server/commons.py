@@ -93,12 +93,12 @@ class HostProviderRouterGlobalDep:
         for host in self.all_hosts:
             if host.id == id:
                 return host.uri
-        
+
         # Check temporary hosts (unlisted)
         for host in self.temporary_hosts:
             if host.id == id:
                 return host.uri
-                
+
         return None
 
     def get_host_listing_from_id(self, id: str) -> HostListing | None:
@@ -115,12 +115,12 @@ class HostProviderRouterGlobalDep:
         for host in self.all_hosts:
             if host.id == id:
                 return host
-        
+
         # Check temporary hosts (unlisted)
         for host in self.temporary_hosts:
             if host.id == id:
                 return host
-                
+
         return None
 
     def get_name_from_uri(self, uri: str) -> str | None:
@@ -137,12 +137,12 @@ class HostProviderRouterGlobalDep:
         for host in self.all_hosts:
             if host.uri == uri:
                 return host.name
-        
+
         # Check temporary hosts (unlisted)
         for host in self.temporary_hosts:
             if host.uri == uri:
                 return host.name
-                
+
         return None
 
     def all_providers(self) -> dict[HostProviderID, HostProvider]:
@@ -159,7 +159,7 @@ class HostProviderRouterGlobalDep:
 
     def add_temporary_host(self, host: HostListing) -> None:
         """Add a temporary (unlisted) host.
-        
+
         These hosts are not visible in the public host list but can be
         accessed directly if you know their ID.
 
@@ -170,7 +170,7 @@ class HostProviderRouterGlobalDep:
             None
         """
         self.temporary_hosts.append(host)
-    
+
     def remove_temporary_host(self, host_id: str) -> bool:
         """Remove a temporary host by ID.
 

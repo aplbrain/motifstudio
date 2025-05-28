@@ -34,7 +34,7 @@ export function GraphUpload({ onGraphUploaded }: GraphUploadProps) {
     const handleDrop = useCallback((e: React.DragEvent) => {
         e.preventDefault();
         setIsDragging(false);
-        
+
         const files = Array.from(e.dataTransfer.files);
         if (files.length > 0) {
             handleFileUpload(files[0]);
@@ -67,15 +67,15 @@ export function GraphUpload({ onGraphUploaded }: GraphUploadProps) {
 
             if (result.success) {
                 setUploadProgress("File uploaded successfully!");
-                
+
                 const uploadedGraph: UploadedGraph = {
                     temp_id: result.temp_id,
                     name: file.name,
                     original_filename: result.original_filename,
                     file_size: result.file_size,
                 };
-                
-                setUploadedGraphs(prev => [...prev, uploadedGraph]);
+
+                setUploadedGraphs((prev) => [...prev, uploadedGraph]);
 
                 // Store in localStorage for persistence
                 const storedGraphs = localStorage.getItem("motifstudio_uploaded_graphs");
@@ -103,8 +103,8 @@ export function GraphUpload({ onGraphUploaded }: GraphUploadProps) {
     };
 
     const removeUploadedGraph = (temp_id: string) => {
-        setUploadedGraphs(prev => prev.filter(g => g.temp_id !== temp_id));
-        
+        setUploadedGraphs((prev) => prev.filter((g) => g.temp_id !== temp_id));
+
         // Update localStorage
         const storedGraphs = localStorage.getItem("motifstudio_uploaded_graphs");
         if (storedGraphs) {
@@ -138,10 +138,12 @@ export function GraphUpload({ onGraphUploaded }: GraphUploadProps) {
             {/* Upload Area */}
             <div
                 className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                    isDragging 
-                        ? "border-blue-400 bg-blue-50 dark:bg-blue-900/20" 
+                    isDragging
+                        ? "border-blue-400 bg-blue-50 dark:bg-blue-900/20"
                         : "border-gray-300 dark:border-gray-600"
-                } ${isUploading ? "opacity-50 pointer-events-none" : "hover:border-gray-400 dark:hover:border-gray-500"}`}
+                } ${
+                    isUploading ? "opacity-50 pointer-events-none" : "hover:border-gray-400 dark:hover:border-gray-500"
+                }`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
@@ -162,9 +164,7 @@ export function GraphUpload({ onGraphUploaded }: GraphUploadProps) {
                             disabled={isUploading}
                         />
                     </label>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        or drag and drop
-                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">or drag and drop</p>
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                     Supports GraphML, GEXF, GML, CSV (edgelist), and gzipped versions
@@ -204,17 +204,15 @@ export function GraphUpload({ onGraphUploaded }: GraphUploadProps) {
                                             id: graph.temp_id,
                                             name: graph.name,
                                             uri: `temp://${graph.temp_id}`,
-                                            provider: {"@id": "TemporaryGraphHostProvider"},
-                                            volumetric_data: {}
+                                            provider: { "@id": "TemporaryGraphHostProvider" },
+                                            volumetric_data: {},
                                         };
                                         onGraphUploaded(hostListing);
                                     }
                                 }}
                             >
                                 <div className="flex-1">
-                                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                        {graph.name}
-                                    </p>
+                                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{graph.name}</p>
                                     <p className="text-xs text-gray-500 dark:text-gray-400">
                                         {formatFileSize(graph.file_size)} • {graph.original_filename}
                                     </p>

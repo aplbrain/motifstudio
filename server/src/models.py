@@ -212,7 +212,7 @@ class DownloadGraphQueryResponse(_QueryResponseBase):
 
 class GraphUploadResponse(BaseModel):
     """A response to a graph upload request."""
-    
+
     temp_id: str = Field(
         ...,
         description="The temporary ID of the uploaded graph."
@@ -237,7 +237,7 @@ class GraphUploadResponse(BaseModel):
 
 class TemporaryHostListing(BaseModel):
     """A listing for a temporarily uploaded host graph."""
-    
+
     temp_id: str = Field(
         ...,
         description="The temporary ID of the uploaded graph."
@@ -262,7 +262,7 @@ class TemporaryHostListing(BaseModel):
 
 class GraphUploadCleanupResponse(BaseModel):
     """A response to a graph upload cleanup request."""
-    
+
     temp_id: str = Field(
         ...,
         description="The temporary ID of the graph that was cleaned up."
