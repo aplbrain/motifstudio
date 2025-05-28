@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Combobox } from "@headlessui/react";
 import useSWR from "swr";
 import { DatabaseIcon } from "./DatabaseIcon";
@@ -22,8 +22,13 @@ export function GraphForm({
 }) {
     // Pull graphs from web server with axios:
     const { data, error, isLoading } = useSWR<{ hosts: HostListing[] }>(`${BASE_URL}/providers/hostlist`, fetcher);
-    const [selectedGraph, setSelectedGraph] = useState<HostListing>(startValue);
+    const [selectedGraph, setSelectedGraph] = useState<HostListing | undefined>(startValue);
     const [query, setQuery] = useState("");
+
+    // Update selectedGraph when startValue changes
+    useEffect(() => {
+        setSelectedGraph(startValue);
+    }, [startValue]);
 
     // Simple loading/error handling.
     // Note that if the host cannot be reached, this is likely the first place

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import { Appbar } from "./Appbar";
 import { GraphForm } from "./GraphForm";
@@ -42,9 +42,30 @@ export default function Home() {
         }
     }
 
+    function handleLoad(data: { queryText: string; graph?: HostListing }) {
+        // Update query text directly
+        setQueryText(data.queryText);
+
+        // Update graph selection directly
+        if (data.graph) {
+            setCurrentGraph(data.graph);
+        } else {
+            setCurrentGraph(undefined);
+        }
+
+        // Update URL parameters without triggering loops
+        if (typeof window !== "undefined") {
+            updateQueryParams({
+                motif: data.queryText,
+                host_id: data.graph?.id || "",
+                host_name: data.graph?.name || "",
+            });
+        }
+    }
+
     return (
         <main className="flex min-h-screen flex-col items-center">
-            <Appbar />
+            <Appbar queryText={queryText} currentGraph={currentGraph} onLoad={handleLoad} />
             <div className="w-full justify-between text-sm lg:flex flex-row px-4 gap-4">
                 <div className="flex flex-col justify-center w-full h-full p-4 gap-4">
                     <div className="bg-white rounded-lg shadow-lg pt-1">

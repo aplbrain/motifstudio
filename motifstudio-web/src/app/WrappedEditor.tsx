@@ -116,7 +116,7 @@ export function WrappedEditor({
                 onChange ? onChange(editor.getValue()) : null;
             }}
             defaultLanguage="motiflang"
-            defaultValue={startValue || _DEFAULT_EDITOR_CONTENTS}
+            value={startValue || _DEFAULT_EDITOR_CONTENTS}
             options={{
                 fontSize: 16,
                 fontLigatures: true,
