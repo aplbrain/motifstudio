@@ -6,6 +6,7 @@ from .host_provider import (
     FilesystemGraphHostProvider,
     S3GraphMLHostProvider,
     OpenCypherHostProvider,
+    TemporaryGraphHostProvider,
 )
 
 __all__ = [
@@ -14,4 +15,5 @@ __all__ = [
     "FilesystemGraphHostProvider",
     "S3GraphMLHostProvider",
     "OpenCypherHostProvider",
+    "TemporaryGraphHostProvider",
 ]
