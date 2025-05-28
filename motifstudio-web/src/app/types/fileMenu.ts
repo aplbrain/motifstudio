@@ -37,3 +37,13 @@ export interface DeleteConfirmDialogProps {
     project: SavedProject | null;
     onConfirm: (projectId: string) => void;
 }
+
+export interface Primitive {
+    name: string;
+    description: string;
+    dotmotif: string;
+}
+
+export interface PrimitivesMenuProps {
+    onInsertPrimitive: (dotmotif: string) => void;
+}

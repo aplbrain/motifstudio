@@ -63,9 +63,20 @@ export default function Home() {
         }
     }
 
+    function handleInsertPrimitive(dotmotif: string) {
+        // Append the primitive to the current query text
+        const newQueryText = queryText ? `${queryText}\n\n${dotmotif}` : dotmotif;
+        updateMotifTest(newQueryText);
+    }
+
     return (
         <main className="flex min-h-screen flex-col items-center">
-            <Appbar queryText={queryText} currentGraph={currentGraph} onLoad={handleLoad} />
+            <Appbar
+                queryText={queryText}
+                currentGraph={currentGraph}
+                onLoad={handleLoad}
+                onInsertPrimitive={handleInsertPrimitive}
+            />
             <div className="w-full justify-between text-sm lg:flex flex-row px-4 gap-4">
                 <div className="flex flex-col justify-center w-full h-full p-4 gap-4">
                     <div className="bg-white rounded-lg shadow-lg pt-1">
