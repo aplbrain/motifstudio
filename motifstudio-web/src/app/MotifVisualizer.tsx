@@ -6,13 +6,17 @@ import useSWR from "swr";
 import { BASE_URL, bodiedFetcher } from "./api";
 import { useRef } from "react";
 import ColorHash from "color-hash";
+import { getQueryParams } from "./queryparams";
 
 Cytoscape.use(COSEBilkent);
 
 export const MotifVisualizer = ({ motifSource }: { motifSource: string }) => {
-    // Construct the motif graph:
+    // All React hooks must be called before any conditional returns
     const debouncedQuery = useThrottle(motifSource, 1000);
-    let elements = useRef([]);
+    let elements = useRef<any[]>([]);
+    
+    // Get query type from URL parameters
+    const { query_type } = typeof window !== "undefined" ? getQueryParams() : { query_type: "dotmotif" };
 
     const colorhash = new ColorHash({
         lightness: 0.5,
@@ -22,7 +26,7 @@ export const MotifVisualizer = ({ motifSource }: { motifSource: string }) => {
         const nodeWithoutID = { ...item, __seed: opts.seed };
         delete nodeWithoutID.id;
         opts.without.forEach((key) => {
-            delete nodeWithoutID[key];
+            delete (nodeWithoutID as any)[key];
         });
         return colorhash.hex(JSON.stringify(nodeWithoutID));
     }
@@ -33,13 +37,13 @@ export const MotifVisualizer = ({ motifSource }: { motifSource: string }) => {
         isLoading: queryIsLoading,
     } = useSWR(
         [`${BASE_URL}/queries/motifs/_parse`, "", debouncedQuery],
-        () => bodiedFetcher(`${BASE_URL}/queries/motifs/_parse`, { host_id: "", query: debouncedQuery }),
+        () => bodiedFetcher(`${BASE_URL}/queries/motifs/_parse`, { host_id: "", query: debouncedQuery, query_type }),
         {
             onSuccess: (data) => {
                 // Construct the motif graph:
                 const motifGraph = JSON.parse(data?.motif_nodelink_json || "{}");
                 elements.current = [
-                    ...(motifGraph?.nodes || []).map((node) => {
+                    ...(motifGraph?.nodes || []).map((node: any) => {
                         return {
                             data: {
                                 ...node,
@@ -48,7 +52,7 @@ export const MotifVisualizer = ({ motifSource }: { motifSource: string }) => {
                             },
                         };
                     }),
-                    ...(motifGraph?.links || []).map((link) => {
+                    ...(motifGraph?.links || []).map((link: any) => {
                         return {
                             data: {
                                 ...link,
@@ -61,6 +65,25 @@ export const MotifVisualizer = ({ motifSource }: { motifSource: string }) => {
             },
         }
     );
+
+    // If it's a Cypher query, show a message that visualization is not supported
+    if (query_type === "cypher") {
+        return (
+            <div className="flex flex-col items-center justify-center h-64 bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                <div className="text-center">
+                    <div className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                        Cypher Query Visualization
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                        Visualization is not available for Cypher queries.
+                        <br />
+                        Cypher queries can return arbitrary data structures that cannot be displayed as traditional motif graphs.
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     if (queryError) {
         return <div>Error loading motif</div>;
     }

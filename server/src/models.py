@@ -13,6 +13,7 @@ _MotifResultsAggregatedMotifVertex = dict[_MotifVertexID, dict[_HostVertexID, in
 _MotifResultsAggregatedMotifVertexAttribute = dict[_MotifVertexID, dict[str, int]]
 _AttributeType = Literal["str", "int", "float", "bool", "datetime.datetime"] | None
 _GraphFormats = Literal["graphml", "graphml.gz", "gexf", "gexf.gz"] | None
+_QueryType = Literal["dotmotif", "cypher"]
 AttributeSchema = dict[str, _AttributeType]
 HostProviderID = str
 
@@ -102,7 +103,11 @@ class MotifParseQueryRequest(_QueryRequestBase):
 
     query: str = Field(
         ...,
-        description="The motif query to execute, in the DotMotif query language",
+        description="The query to execute",
+    )
+    query_type: _QueryType = Field(
+        "dotmotif",
+        description="The type of query language being used",
     )
 
 
@@ -110,6 +115,7 @@ class MotifParseQueryResponse(_QueryResponseBase):
     """A response with the motif parse results for a host graph."""
 
     query: str
+    query_type: _QueryType
     motif_entities: list[str]
     motif_edges: list[list[str]]
     motif_nodelink_json: str
@@ -124,7 +130,11 @@ class MotifCountQueryRequest(_QueryRequestBase):
 
     query: str = Field(
         ...,
-        description="The motif query to execute, in the DotMotif query language",
+        description="The query to execute",
+    )
+    query_type: _QueryType = Field(
+        "dotmotif",
+        description="The type of query language being used",
     )
 
 
@@ -132,6 +142,7 @@ class MotifCountQueryResponse(_QueryResponseBase):
     """A response with the motif count results for a host graph."""
 
     query: str
+    query_type: _QueryType
     motif_count: int
     motif_entities: list[str]
     error: str | None = Field(
@@ -145,7 +156,11 @@ class MotifQueryRequest(BaseModel):
 
     query: str = Field(
         ...,
-        description="The motif query to execute, in the DotMotif query language",
+        description="The query to execute",
+    )
+    query_type: _QueryType = Field(
+        "dotmotif",
+        description="The type of query language being used",
     )
     host_id: str = Field(..., description="The ID of the host graph to query")
     # Aggregator (`aggregator`) is an optional parameter that can be used to
@@ -167,6 +182,7 @@ class MotifQueryResponse(_QueryResponseBase):
     """
 
     query: str
+    query_type: _QueryType
     motif_count: int
     aggregation_type: str | None
     motif_results: PossibleMotifResultTypes
@@ -213,65 +229,26 @@ class DownloadGraphQueryResponse(_QueryResponseBase):
 class GraphUploadResponse(BaseModel):
     """A response to a graph upload request."""
 
-    temp_id: str = Field(
-        ...,
-        description="The temporary ID of the uploaded graph."
-    )
-    original_filename: str = Field(
-        ...,
-        description="The original filename of the uploaded graph."
-    )
-    file_size: int = Field(
-        ...,
-        description="The size of the uploaded file in bytes."
-    )
-    success: bool = Field(
-        ...,
-        description="Whether the upload was successful."
-    )
-    error: str | None = Field(
-        None,
-        description="If an error occurred, a message describing the error."
-    )
+    temp_id: str = Field(..., description="The temporary ID of the uploaded graph.")
+    original_filename: str = Field(..., description="The original filename of the uploaded graph.")
+    file_size: int = Field(..., description="The size of the uploaded file in bytes.")
+    success: bool = Field(..., description="Whether the upload was successful.")
+    error: str | None = Field(None, description="If an error occurred, a message describing the error.")
 
 
 class TemporaryHostListing(BaseModel):
     """A listing for a temporarily uploaded host graph."""
 
-    temp_id: str = Field(
-        ...,
-        description="The temporary ID of the uploaded graph."
-    )
-    name: str = Field(
-        ...,
-        description="The display name for the temporary graph."
-    )
-    original_filename: str = Field(
-        ...,
-        description="The original filename of the uploaded graph."
-    )
-    file_size: int = Field(
-        ...,
-        description="The size of the uploaded file in bytes."
-    )
-    created_at: str = Field(
-        ...,
-        description="When the file was uploaded."
-    )
+    temp_id: str = Field(..., description="The temporary ID of the uploaded graph.")
+    name: str = Field(..., description="The display name for the temporary graph.")
+    original_filename: str = Field(..., description="The original filename of the uploaded graph.")
+    file_size: int = Field(..., description="The size of the uploaded file in bytes.")
+    created_at: str = Field(..., description="When the file was uploaded.")
 
 
 class GraphUploadCleanupResponse(BaseModel):
     """A response to a graph upload cleanup request."""
 
-    temp_id: str = Field(
-        ...,
-        description="The temporary ID of the graph that was cleaned up."
-    )
-    success: bool = Field(
-        ...,
-        description="Whether the cleanup was successful."
-    )
-    error: str | None = Field(
-        None,
-        description="If an error occurred, a message describing the error."
-    )
+    temp_id: str = Field(..., description="The temporary ID of the graph that was cleaned up.")
+    success: bool = Field(..., description="Whether the cleanup was successful.")
+    error: str | None = Field(None, description="If an error occurred, a message describing the error.")

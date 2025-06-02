@@ -19,13 +19,24 @@ import { MotifVisualizer } from "./MotifVisualizer";
  * of the graph, the motif query, and the entities in the graph.
  */
 export default function Home() {
-    const { host_id, motif, host_name } =
-        typeof window !== "undefined" ? getQueryParams() : { host_id: "", motif: "", host_name: "" };
-    const [currentGraph, setCurrentGraph] = useState<HostListing | undefined>({
-        id: host_id || "",
-        name: host_name || "",
-    });
+    const { host_id, motif, host_name, query_type } =
+        typeof window !== "undefined"
+            ? getQueryParams()
+            : { host_id: "", motif: "", host_name: "", query_type: "dotmotif" };
+    const [currentGraph, setCurrentGraph] = useState<HostListing | undefined>(
+        host_id && host_name
+            ? {
+                  id: host_id,
+                  name: host_name,
+                  uri: "",
+                  provider: {},
+              }
+            : undefined
+    );
     const [queryText, setQueryText] = useState(motif || "");
+    const [queryType, setQueryType] = useState<"dotmotif" | "cypher">(
+        (query_type as "dotmotif" | "cypher") || "dotmotif"
+    );
     const [entities, setEntities] = useState<{ [key: string]: string }>({});
 
     function setSelectedGraph(graph: HostListing) {
@@ -42,9 +53,21 @@ export default function Home() {
         }
     }
 
-    function handleLoad(data: { queryText: string; graph?: HostListing }) {
+    function updateQueryType(type: "dotmotif" | "cypher") {
+        setQueryType(type);
+        if (typeof window !== "undefined") {
+            updateQueryParams({ query_type: type });
+        }
+    }
+
+    function handleLoad(data: { queryText: string; graph?: HostListing; queryType?: "dotmotif" | "cypher" }) {
         // Update query text directly
         setQueryText(data.queryText);
+
+        // Update query type if provided
+        if (data.queryType) {
+            setQueryType(data.queryType);
+        }
 
         // Update graph selection directly
         if (data.graph) {
@@ -59,6 +82,7 @@ export default function Home() {
                 motif: data.queryText,
                 host_id: data.graph?.id || "",
                 host_name: data.graph?.name || "",
+                query_type: data.queryType || queryType,
             });
         }
     }
@@ -80,8 +104,23 @@ export default function Home() {
             <div className="w-full justify-between text-sm lg:flex flex-row px-4 gap-4">
                 <div className="flex flex-col justify-center w-full h-full p-4 gap-4">
                     <div className="bg-white rounded-lg shadow-lg pt-1">
+                        <div className="flex items-center justify-between p-3 border-b">
+                            <h3 className="text-lg font-medium">Query Editor</h3>
+                            <div className="flex items-center gap-2">
+                                <label className="text-sm font-medium">Language:</label>
+                                <select
+                                    value={queryType}
+                                    onChange={(e) => updateQueryType(e.target.value as "dotmotif" | "cypher")}
+                                    className="px-3 py-1 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                    <option value="dotmotif">DotMotif</option>
+                                    <option value="cypher">Cypher</option>
+                                </select>
+                            </div>
+                        </div>
                         <WrappedEditor
                             startValue={queryText}
+                            queryType={queryType}
                             entityNames={currentGraph ? Object.keys(entities) : undefined}
                             onChange={(value) => updateMotifTest(value || "")}
                         />
@@ -89,7 +128,7 @@ export default function Home() {
                     <GraphForm startValue={currentGraph} onGraphChange={setSelectedGraph} />
                 </div>
                 <div className="div flex w-full flex-col py-4 gap-4">
-                    {motif ? (
+                    {motif && queryType === "dotmotif" ? (
                         <MotifVisualizer
                             motifSource={motif}
                             // graph={currentGraph}
@@ -97,7 +136,9 @@ export default function Home() {
                         />
                     ) : null}
                     {currentGraph ? <GraphStats graph={currentGraph} onAttributesLoaded={setEntities} /> : null}
-                    {currentGraph ? <ResultsWrapper graph={currentGraph} query={queryText} /> : null}
+                    {currentGraph ? (
+                        <ResultsWrapper graph={currentGraph} query={queryText} queryType={queryType} />
+                    ) : null}
                 </div>
             </div>
         </main>
