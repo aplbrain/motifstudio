@@ -103,15 +103,15 @@ export default function Home() {
             />
             <div className="w-full justify-between text-sm lg:flex flex-row px-4 gap-4">
                 <div className="flex flex-col justify-center w-full h-full p-4 gap-4">
-                    <div className="bg-white rounded-lg shadow-lg pt-1">
-                        <div className="flex items-center justify-between p-3 border-b">
-                            <h3 className="text-lg font-medium">Query Editor</h3>
+                    <div className="bg-white rounded-lg shadow-lg pt-1 dark:bg-gray-800">
+                        <div className="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-700">
+                            <h3 className="text-lg font-medium dark:text-gray-200">Query Editor</h3>
                             <div className="flex items-center gap-2">
-                                <label className="text-sm font-medium">Language:</label>
+                                <label className="text-sm font-medium dark:text-gray-200">Language:</label>
                                 <select
                                     value={queryType}
                                     onChange={(e) => updateQueryType(e.target.value as "dotmotif" | "cypher")}
-                                    className="px-3 py-1 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="px-3 py-1 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent dark:bg-gray-900 dark:text-gray-200"
                                 >
                                     <option value="dotmotif">DotMotif</option>
                                     <option value="cypher">Cypher</option>

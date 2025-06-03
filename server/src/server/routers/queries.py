@@ -28,7 +28,7 @@ from ...models import (
     _GraphFormats,
 )
 from ...host_provider.host_provider.host_provider import NetworkXHostProvider
-from ..commons import HostProviderRouterGlobalDep, provider_router
+from ..commons import HostProviderRouterGlobalDep, provider_router, run_with_limits, get_total_ram_bytes
 
 router = APIRouter(
     prefix="/queries",
@@ -81,7 +81,19 @@ def query_graph_download(
         )
 
     tic = time.time()
-    nx_graph, error_msg = provider.maybe_get_networkx_graph(uri)
+    # Enforce query resource limits
+    ram_limit = commons.max_ram_bytes if commons.max_ram_bytes is not None else int(get_total_ram_bytes() * commons.max_ram_pct)
+    try:
+        nx_graph, error_msg = run_with_limits(
+            provider.maybe_get_networkx_graph,
+            args=(uri,),
+            max_ram_bytes=ram_limit,
+            timeout_seconds=commons.max_duration_seconds,
+        )
+    except TimeoutError as e:
+        raise HTTPException(status_code=504, detail=str(e))
+    except MemoryError as e:
+        raise HTTPException(status_code=503, detail=str(e))
 
     def _get_bytes(graph, fmt: _GraphFormats):
         # We never prettyprint because we have to send it over the wire next
@@ -217,6 +229,9 @@ def query_count_motifs(
 
     """
     tic = time.time()
+    # Compute resource limits for the query
+    ram_limit = commons.max_ram_bytes if commons.max_ram_bytes is not None else int(get_total_ram_bytes() * commons.max_ram_pct)
+    timeout = commons.max_duration_seconds
     uri = commons.get_uri_from_id(motif_count_query_request.host_id)
     if uri is None:
         raise HTTPException(
@@ -237,8 +252,18 @@ def query_count_motifs(
             # For Cypher count queries, we need to execute and count results
             # Check if provider supports NetworkX graphs
             if isinstance(provider, NetworkXHostProvider):
-                host_graph = provider.get_networkx_graph(uri)
-                results = grandcypher.GrandCypher(host_graph).run(motif_count_query_request.query)
+                host_graph = run_with_limits(
+                    provider.get_networkx_graph,
+                    args=(uri,),
+                    max_ram_bytes=ram_limit,
+                    timeout_seconds=timeout,
+                )
+                results = run_with_limits(
+                    grandcypher.GrandCypher(host_graph).run,
+                    args=(motif_count_query_request.query,),
+                    max_ram_bytes=ram_limit,
+                    timeout_seconds=timeout,
+                )
 
                 # Handle GrandCypher result format: {"entity": [res1, res2, res3], "entity2": [res1, res2, res3]}
                 if isinstance(results, dict) and results:
@@ -265,7 +290,12 @@ def query_count_motifs(
                 raise ValueError(f"Provider {provider.type} does not support Cypher queries")
         else:
             # Default to DotMotif counting
-            count = provider.get_motif_count(uri, motif_count_query_request.query)
+            count = run_with_limits(
+                provider.get_motif_count,
+                args=(uri, motif_count_query_request.query),
+                max_ram_bytes=ram_limit,
+                timeout_seconds=timeout,
+            )
             motif = Motif(motif_count_query_request.query)
             return MotifCountQueryResponse(
                 query=motif_count_query_request.query,
@@ -361,6 +391,9 @@ def query_motifs(
 
     """
     tic = time.time()
+    # Compute resource limits for the query
+    ram_limit = commons.max_ram_bytes if commons.max_ram_bytes is not None else int(get_total_ram_bytes() * commons.max_ram_pct)
+    timeout = commons.max_duration_seconds
     uri = commons.get_uri_from_id(motif_query_request.host_id)
     listing = commons.get_host_listing_from_id(motif_query_request.host_id)
     volumetric_data = None
@@ -388,8 +421,18 @@ def query_motifs(
             # For Cypher queries, we need to get the host graph first
             # Check if provider supports NetworkX graphs
             if isinstance(provider, NetworkXHostProvider):
-                host_graph = provider.get_networkx_graph(uri)
-                results = grandcypher.GrandCypher(host_graph).run(motif_query_request.query)
+                host_graph = run_with_limits(
+                    provider.get_networkx_graph,
+                    args=(uri,),
+                    max_ram_bytes=ram_limit,
+                    timeout_seconds=timeout,
+                )
+                results = run_with_limits(
+                    grandcypher.GrandCypher(host_graph).run,
+                    args=(motif_query_request.query,),
+                    max_ram_bytes=ram_limit,
+                    timeout_seconds=timeout,
+                )
 
                 # Convert GrandCypher results to expected format
                 # GrandCypher returns: {"entity": [res1, res2, res3], "entity2": [res1, res2, res3]}
@@ -439,10 +482,12 @@ def query_motifs(
         else:
             # Default to DotMotif for backward compatibility
             motif = Motif(motif_query_request.query)
-            results = provider.get_motifs(
-                uri,
-                motif_query_request.query,
-                aggregation_type=motif_query_request.aggregation_type,
+            results = run_with_limits(
+                provider.get_motifs,
+                args=(uri, motif_query_request.query),
+                kwargs={"aggregation_type": motif_query_request.aggregation_type},
+                max_ram_bytes=ram_limit,
+                timeout_seconds=timeout,
             )
             count = len(results)
             return MotifQueryResponse(

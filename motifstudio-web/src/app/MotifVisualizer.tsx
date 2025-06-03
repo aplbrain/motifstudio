@@ -14,7 +14,7 @@ export const MotifVisualizer = ({ motifSource }: { motifSource: string }) => {
     // All React hooks must be called before any conditional returns
     const debouncedQuery = useThrottle(motifSource, 1000);
     let elements = useRef<any[]>([]);
-    
+
     // Get query type from URL parameters
     const { query_type } = typeof window !== "undefined" ? getQueryParams() : { query_type: "dotmotif" };
 
@@ -77,7 +77,8 @@ export const MotifVisualizer = ({ motifSource }: { motifSource: string }) => {
                     <div className="text-sm text-gray-500 dark:text-gray-400">
                         Visualization is not available for Cypher queries.
                         <br />
-                        Cypher queries can return arbitrary data structures that cannot be displayed as traditional motif graphs.
+                        Cypher queries can return arbitrary data structures that cannot be displayed as traditional
+                        motif graphs.
                     </div>
                 </div>
             </div>

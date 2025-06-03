@@ -25,6 +25,20 @@ pip install -r requirements/dev-requirements.in
 
 The server is configured using a `config.json` file in `src/server`. An example configuration file is provided in `src/server/config.example.json`.
 
+You can optionally configure resource limits for queries to prevent long-running or memory-intensive queries from impacting server stability. Add a `query_limits` section with the following fields:
+
+```json
+"query_limits": {
+  "max_ram_pct": 0.5,
+  "max_ram_bytes": 1073741824,
+  "max_duration_seconds": 120
+}
+```
+
+`max_ram_pct` is a fraction of total system memory (default: 0.5), `max_ram_bytes` is an absolute memory limit in bytes (optional; if set, overrides `max_ram_pct`), and `max_duration_seconds` is the maximum wall-clock time in seconds for a query (default: 120).
+
+Note: On non-Linux/Darwin systems, install `psutil` to enable memory limit detection.
+
 ## Running the Server
 
 To run the server in "development" mode, run:
