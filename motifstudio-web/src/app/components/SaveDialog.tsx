@@ -37,10 +37,10 @@ export function SaveDialog({ isOpen, onClose, queryText, currentGraph, savedProj
             <div className="fixed inset-0 bg-black/25" />
             <div className="fixed inset-0 overflow-y-auto">
                 <div className="flex min-h-full items-center justify-center p-4">
-                    <Dialog.Panel className="w-full max-w-4xl max-h-[80vh] rounded-lg bg-white shadow-xl flex flex-col">
-                        <div className="flex items-center justify-between p-6 border-b">
-                            <Dialog.Title className="text-lg font-medium text-gray-900">Save Project</Dialog.Title>
-                            <button onClick={handleClose} className="text-gray-400 hover:text-gray-600">
+                    <Dialog.Panel className="w-full max-w-4xl max-h-[80vh] rounded-lg bg-white shadow-xl flex flex-col dark:bg-gray-800">
+                        <div className="flex items-center justify-between p-6 border-b dark:border-gray-700">
+                            <Dialog.Title className="text-lg font-medium text-gray-900 dark:text-gray-200">Save Project</Dialog.Title>
+                            <button onClick={handleClose} className="text-gray-400 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-200">
                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path
                                         strokeLinecap="round"
@@ -54,20 +54,20 @@ export function SaveDialog({ isOpen, onClose, queryText, currentGraph, savedProj
 
                         <div className="flex-1 flex min-h-0">
                             {/* File Explorer Panel */}
-                            <div className="w-2/3 border-r flex flex-col">
-                                <div className="px-4 py-3 bg-gray-50 border-b">
-                                    <h3 className="text-sm font-medium text-gray-700">Saved Projects</h3>
+                            <div className="w-2/3 border-r flex flex-col border-gray-200 dark:border-gray-700">
+                                <div className="px-4 py-3 bg-gray-50 border-b dark:bg-gray-700 dark:border-gray-700">
+                                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-200">Saved Projects</h3>
                                 </div>
                                 <div className="flex-1 overflow-y-auto">
                                     {savedProjects.length === 0 ? (
                                         <div className="flex items-center justify-center h-32">
                                             <div className="text-center">
-                                                <DocumentIcon className="mx-auto h-12 w-12 text-gray-300" />
-                                                <p className="mt-2 text-sm text-gray-500">No saved projects yet</p>
+                                                <DocumentIcon className="mx-auto h-12 w-12 text-gray-300 dark:text-gray-400" />
+                                                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">No saved projects yet</p>
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="divide-y divide-gray-200">
+                                        <div className="divide-y divide-gray-200 dark:divide-gray-700">
                                             {savedProjects.map((project) => (
                                                 <div
                                                     key={project.id}
@@ -81,10 +81,10 @@ export function SaveDialog({ isOpen, onClose, queryText, currentGraph, savedProj
                                                     <div className="flex items-start space-x-3">
                                                         <DocumentIcon className="flex-shrink-0 h-5 w-5 text-gray-400 mt-0.5" />
                                                         <div className="flex-1 min-w-0">
-                                                            <p className="text-sm font-medium text-gray-900 truncate">
+                                                            <p className="text-sm font-medium text-gray-900 truncate dark:text-gray-200">
                                                                 {project.name}
                                                             </p>
-                                                            <div className="mt-1 flex items-center space-x-1 text-xs text-gray-500">
+                                                            <div className="mt-1 flex items-center space-x-1 text-xs text-gray-500 dark:text-gray-400">
                                                                 <span>
                                                                     {new Date(project.timestamp).toLocaleDateString()}
                                                                 </span>
@@ -112,26 +112,26 @@ export function SaveDialog({ isOpen, onClose, queryText, currentGraph, savedProj
 
                             {/* Save Form Panel */}
                             <div className="w-1/3 flex flex-col">
-                                <div className="px-4 py-3 bg-gray-50 border-b">
-                                    <h3 className="text-sm font-medium text-gray-700">Project Details</h3>
+                                <div className="px-4 py-3 bg-gray-50 border-b dark:bg-gray-700 dark:border-gray-700">
+                                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-200">Project Details</h3>
                                 </div>
                                 <div className="flex-1 p-4 space-y-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-200">
                                             Project Name
                                         </label>
                                         <input
                                             type="text"
                                             value={saveName}
                                             onChange={(e) => setSaveName(e.target.value)}
-                                            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-900 dark:text-gray-200 dark:border-gray-600"
                                             placeholder="Enter project name..."
                                             onKeyDown={(e) => e.key === "Enter" && handleSave()}
                                         />
                                         {saveName.trim() && projectExists && (
-                                            <div className="mt-2 flex items-start space-x-2 p-2 bg-amber-50 border border-amber-200 rounded-md">
+                                            <div className="mt-2 flex items-start space-x-2 p-2 bg-amber-50 border border-amber-200 rounded-md dark:bg-amber-900/20 dark:border-amber-700">
                                                 <svg
-                                                    className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0"
+                                                    className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0 dark:text-amber-200"
                                                     fill="currentColor"
                                                     viewBox="0 0 20 20"
                                                 >
@@ -142,8 +142,8 @@ export function SaveDialog({ isOpen, onClose, queryText, currentGraph, savedProj
                                                     />
                                                 </svg>
                                                 <div>
-                                                    <p className="text-xs text-amber-700 font-medium">File exists</p>
-                                                    <p className="text-xs text-amber-600">
+                                                    <p className="text-xs text-amber-700 font-medium dark:text-amber-200">File exists</p>
+                                                    <p className="text-xs text-amber-600 dark:text-amber-300">
                                                         This will overwrite the existing project.
                                                     </p>
                                                 </div>
@@ -153,21 +153,21 @@ export function SaveDialog({ isOpen, onClose, queryText, currentGraph, savedProj
 
                                     <div className="space-y-3">
                                         <div className="flex items-center">
-                                            <input
-                                                id="include-graph"
-                                                type="checkbox"
-                                                checked={includeGraph}
-                                                onChange={(e) => setIncludeGraph(e.target.checked)}
-                                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                                            />
-                                            <label htmlFor="include-graph" className="ml-2 block text-sm text-gray-700">
+                                                <input
+                                                    id="include-graph"
+                                                    type="checkbox"
+                                                    checked={includeGraph}
+                                                    onChange={(e) => setIncludeGraph(e.target.checked)}
+                                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded dark:bg-gray-900 dark:border-gray-600"
+                                                />
+                                            <label htmlFor="include-graph" className="ml-2 block text-sm text-gray-700 dark:text-gray-200">
                                                 Include graph selection
                                             </label>
                                         </div>
                                         {includeGraph && currentGraph && (
-                                            <div className="ml-6 p-2 bg-blue-50 border border-blue-200 rounded-md">
-                                                <p className="text-xs text-blue-700 font-medium">Current Graph:</p>
-                                                <p className="text-xs text-blue-600">{currentGraph.name}</p>
+                                            <div className="ml-6 p-2 bg-blue-50 border border-blue-200 rounded-md dark:bg-blue-900/20 dark:border-blue-700">
+                                                <p className="text-xs text-blue-700 font-medium dark:text-blue-200">Current Graph:</p>
+                                                <p className="text-xs text-blue-600 dark:text-blue-200">{currentGraph.name}</p>
                                             </div>
                                         )}
                                     </div>
@@ -175,10 +175,10 @@ export function SaveDialog({ isOpen, onClose, queryText, currentGraph, savedProj
                             </div>
                         </div>
 
-                        <div className="px-6 py-4 bg-gray-50 border-t flex justify-end gap-3">
+                        <div className="px-6 py-4 bg-gray-50 border-t flex justify-end gap-3 dark:bg-gray-700 dark:border-gray-700">
                             <button
                                 onClick={handleClose}
-                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
                             >
                                 Cancel
                             </button>
