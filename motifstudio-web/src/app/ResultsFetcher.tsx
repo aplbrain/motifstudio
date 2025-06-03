@@ -29,6 +29,12 @@ export function ResultsFetcher({
 
     if (queryIsLoading) return <LoadingSpinner />;
 
+    // If there was a fetching error, show it to the user
+    if (queryError) {
+        const msg = queryError instanceof Error ? queryError.message : String(queryError);
+        return <div className="text-red-500 p-4">Error fetching query: {msg}</div>;
+    }
+
     let durationString = "";
     if (queryData?.response_duration_ms) {
         // < 2 sec, show ms
@@ -48,6 +54,11 @@ export function ResultsFetcher({
         if (errorText.includes("max() arg is an empty sequence")) {
             errorText = "Motif must contain only one connected component.";
         }
+    }
+
+    // If server returned an error message, display it
+    if (errorText) {
+        return <div className="text-red-500 p-4">{errorText}</div>;
     }
 
     let motifCountString = "";

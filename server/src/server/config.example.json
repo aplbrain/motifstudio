@@ -15,5 +15,10 @@
             "type": "FilesystemGraphMLHostProvider",
             "arguments": {}
         }
-    ]
+    ],
+    "query_limits": {
+        "max_ram_pct": 0.5,
+        "max_ram_bytes": null,
+        "max_duration_seconds": 120
+    }
 }
