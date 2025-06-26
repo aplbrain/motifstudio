@@ -98,6 +98,19 @@ class EdgeCountQueryResponse(_QueryResponseBase):
     edge_count: int
 
 
+class EdgeAttributeQueryRequest(_QueryRequestBase):
+    """A request to get the edge attributes for a host graph."""
+
+    ...
+
+
+class EdgeAttributeQueryResponse(_QueryResponseBase):
+    """A response with the edge attribute results for a host graph."""
+
+    # Attribute name to attribute schema:
+    attributes: AttributeSchema
+
+
 class MotifParseQueryRequest(_QueryRequestBase):
     """A request to parse a motif query."""
 
