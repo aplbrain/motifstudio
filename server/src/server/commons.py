@@ -121,8 +121,10 @@ def run_with_limits(func, args=(), kwargs=None, max_ram_bytes=None, timeout_seco
         if proc.is_alive() and hasattr(proc, "kill"):
             proc.kill()
             proc.join(0)
+        print(f"Process terminated due to timeout after {timeout_seconds} seconds.")
         raise TimeoutError(f"Query exceeded time limit of {timeout_seconds} seconds")
     if queue.empty():
+        print(f"Process terminated unexpectedly, did not return a result, or exceeded {max_ram_bytes} bytes.")
         raise MemoryError(f"Query exceeded memory limit of {max_ram_bytes} bytes or terminated unexpectedly")
     success, payload = queue.get()
     if success:
@@ -166,7 +168,7 @@ class HostProviderRouterGlobalDep:
         ql = config.get("query_limits", {})
         self.max_ram_pct = ql.get("max_ram_pct", 0.5)
         self.max_ram_bytes = ql.get("max_ram_bytes")
-        self.max_duration_seconds = ql.get("max_duration_seconds", 120)
+        self.max_duration_seconds = ql.get("max_duration_seconds", 180)
 
     def get_uri_from_id(self, id: str) -> str | None:
         """Returns the URI of a host from its name.
