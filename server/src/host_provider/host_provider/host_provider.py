@@ -72,6 +72,18 @@ class HostProvider(Protocol):
         """
         ...
 
+    def get_edge_attribute_schema(self, uri: str) -> AttributeSchema:
+        """Return the schema of the edge attributes in the graph.
+
+        Arguments:
+            uri (str): The URI of the host.
+
+        Returns:
+            dict[str, str]: The schema of the edge attributes in the graph.
+
+        """
+        ...
+
     def get_motif_count(self, uri: str, motif_string: str) -> int:
         """Get a count of motifs in the graph.
 
@@ -174,6 +186,31 @@ class NetworkXHostProvider(HostProvider):
 
         """
         return len(self.get_networkx_graph(uri).edges)
+
+    def get_edge_attribute_schema(self, uri: str) -> dict[str, str]:
+        """Return the schema of the edge attributes in the graph.
+
+        Arguments:
+            uri (str): The URI of the host.
+
+        Returns:
+            dict[str, str]: The schema of the edge attributes in the graph.
+
+        """
+        g = self.get_networkx_graph(uri)
+        # TODO: This exhaustive search is no good for very large graphs.
+
+        # Detect types of attributes, which may be different for different
+        # edges.
+        attribute_types = {}
+        for edge in g.edges:
+            for attribute in g.edges[edge].keys():
+                if attribute not in attribute_types:
+                    attribute_types[attribute] = type(g.edges[edge][attribute]).__name__
+                else:
+                    if attribute_types[attribute] != type(g.edges[edge][attribute]).__name__:
+                        attribute_types[attribute] = "str"
+        return attribute_types
 
     def get_motif_count(self, uri: str, motif_string: str) -> int:
         """Count the number of instances of a motif in the graph.

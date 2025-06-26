@@ -58,6 +58,17 @@ export function GraphStats({
             host_id: graph?.id,
         })
     );
+    const {
+        data: edgeAttrData,
+        error: edgeAttrError,
+        isLoading: edgeAttrIsLoading,
+    } = useSWR<{
+        attributes: { [key: string]: string };
+    }>([`${BASE_URL}/queries/edges/attributes`, graph?.id], () =>
+        bodiedFetcher(`${BASE_URL}/queries/edges/attributes`, {
+            host_id: graph?.id,
+        })
+    );
 
     // To handle the fact that the attributes are loaded asynchronously, we
     // provide a callback function to the parent component to share the
@@ -70,8 +81,8 @@ export function GraphStats({
 
     // Use client-only check to avoid hydration mismatch
     if (!isClient) return <div>Loading...</div>;
-    if (vertIsLoading || edgeIsLoading) return <div>Loading...</div>;
-    if (vertError || edgeError) return <div>Error: {vertError}</div>;
+    if (vertIsLoading || edgeIsLoading || vertAttrIsLoading || edgeAttrIsLoading) return <div>Loading...</div>;
+    if (vertError || edgeError || vertAttrError || edgeAttrError) return <div>Error: {vertError || edgeError || vertAttrError || edgeAttrError}</div>;
     if (!vertData || !edgeData) return <div>No data</div>;
 
     /**
@@ -153,13 +164,30 @@ export function GraphStats({
                 <div className="flex gap-2">
                     {vertAttrData?.attributes
                         ? Object.entries(vertAttrData?.attributes).map(([key, value]) => (
-                              <span
-                                  key={key}
-                                  className="px-2 py-1 bg-blue-50 rounded-md shadow-sm text-sm font-medium text-blue-800"
-                              >
-                                  {key} <b className="font-mono">({value})</b>
-                              </span>
-                          ))
+                            <span
+                                key={key}
+                                className="px-2 py-1 bg-blue-50 rounded-md shadow-sm text-sm font-medium text-blue-800"
+                            >
+                                {key} <b className="font-mono">({value})</b>
+                            </span>
+                        ))
+                        : null}
+                </div>
+
+                <hr className="my-2 w-full" />
+
+                {/* Edge attributes list */}
+                <h3 className="text-lg font-mono w-full">Edge Attributes</h3>
+                <div className="flex gap-2">
+                    {edgeAttrData?.attributes
+                        ? Object.entries(edgeAttrData?.attributes).map(([key, value]) => (
+                            <span
+                                key={key}
+                                className="px-2 py-1 bg-green-50 rounded-md shadow-sm text-sm font-medium text-green-800"
+                            >
+                                {key} <b className="font-mono">({value})</b>
+                            </span>
+                        ))
                         : null}
                 </div>
 
