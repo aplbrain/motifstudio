@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import useSWR from "swr";
 import { HostListing, bodiedFetcher, BASE_URL } from "./api";
 import { useClientOnly } from "./hooks/useClientOnly";
@@ -25,6 +25,7 @@ export function GraphStats({
     onAttributesLoaded?: (attributes: { [key: string]: string }) => void;
 }) {
     const isClient = useClientOnly();
+    const [downloadingFormat, setDownloadingFormat] = useState<string | null>(null);
 
     // Fetch graph statistics and attributes.
     // TODO: Perhaps these should all go in one combined query?
@@ -80,6 +81,9 @@ export function GraphStats({
      *     "graphml", "gml", "gexf", "json".
      */
     function downloadGraph(format: string = "graphml") {
+        // Set loading state
+        setDownloadingFormat(format);
+
         // POST to /api/queries/graph/download with the "host_id" and "format"
         // parameters in the body.
         fetch(`${BASE_URL}/queries/graph/download`, {
@@ -101,6 +105,14 @@ export function GraphStats({
                 a.href = url;
                 a.download = `${graph.name}.${format}`;
                 a.click();
+            })
+            .catch((error) => {
+                console.error("Download failed:", error);
+                // You could add error handling UI here if needed
+            })
+            .finally(() => {
+                // Clear loading state
+                setDownloadingFormat(null);
             });
     }
 
@@ -158,14 +170,36 @@ export function GraphStats({
                 <div className="flex gap-2">
                     <button
                         onClick={() => downloadGraph("graphml")}
-                        className="font-bold rounded text-white px-4 bg-blue-500 hover:bg-blue-700"
+                        disabled={downloadingFormat !== null}
+                        className={`font-bold rounded text-white px-4 py-2 flex items-center gap-2 ${
+                            downloadingFormat === "graphml"
+                                ? "bg-blue-400 cursor-not-allowed"
+                                : "bg-blue-500 hover:bg-blue-700"
+                        }`}
                     >
+                        {downloadingFormat === "graphml" && (
+                            <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
+                        )}
                         GraphML
                     </button>
                     <button
                         onClick={() => downloadGraph("gexf")}
-                        className="font-bold rounded text-white px-4 bg-blue-500 hover:bg-blue-700"
+                        disabled={downloadingFormat !== null}
+                        className={`font-bold rounded text-white px-4 py-2 flex items-center gap-2 ${
+                            downloadingFormat === "gexf"
+                                ? "bg-blue-400 cursor-not-allowed"
+                                : "bg-blue-500 hover:bg-blue-700"
+                        }`}
                     >
+                        {downloadingFormat === "gexf" && (
+                            <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
+                        )}
                         GEXF
                     </button>
                 </div>

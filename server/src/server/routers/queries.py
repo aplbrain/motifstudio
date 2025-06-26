@@ -81,19 +81,23 @@ def query_graph_download(
         )
 
     tic = time.time()
+
+    # For resource limits, see below.
+    nx_graph, error_msg = provider.maybe_get_networkx_graph(uri)
+
     # Enforce query resource limits
-    ram_limit = commons.max_ram_bytes if commons.max_ram_bytes is not None else int(get_total_ram_bytes() * commons.max_ram_pct)
-    try:
-        nx_graph, error_msg = run_with_limits(
-            provider.maybe_get_networkx_graph,
-            args=(uri,),
-            max_ram_bytes=ram_limit,
-            timeout_seconds=commons.max_duration_seconds,
-        )
-    except TimeoutError as e:
-        raise HTTPException(status_code=504, detail=str(e))
-    except MemoryError as e:
-        raise HTTPException(status_code=503, detail=str(e))
+    # ram_limit = commons.max_ram_bytes if commons.max_ram_bytes is not None else int(get_total_ram_bytes() * commons.max_ram_pct)
+    # try:
+    #     nx_graph, error_msg = run_with_limits(
+    #         provider.maybe_get_networkx_graph,
+    #         args=(uri,),
+    #         max_ram_bytes=ram_limit,
+    #         timeout_seconds=commons.max_duration_seconds,
+    #     )
+    # except TimeoutError as e:
+    #     raise HTTPException(status_code=504, detail=str(e))
+    # except MemoryError as e:
+    #     raise HTTPException(status_code=503, detail=str(e))
 
     def _get_bytes(graph, fmt: _GraphFormats):
         # We never prettyprint because we have to send it over the wire next
