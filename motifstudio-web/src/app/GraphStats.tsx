@@ -161,7 +161,7 @@ export function GraphStats({
 
                 {/* Vertex attributes list */}
                 <h3 className="text-lg font-mono w-full">Vertex Attributes</h3>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                     {vertAttrData?.attributes
                         ? Object.entries(vertAttrData?.attributes).map(([key, value]) => (
                             <span
@@ -178,7 +178,7 @@ export function GraphStats({
 
                 {/* Edge attributes list */}
                 <h3 className="text-lg font-mono w-full">Edge Attributes</h3>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                     {edgeAttrData?.attributes
                         ? Object.entries(edgeAttrData?.attributes).map(([key, value]) => (
                             <span
