@@ -3,6 +3,7 @@ import Image from "next/image";
 import { FileMenu } from "./FileMenu";
 import { PrimitivesMenu } from "./components/PrimitivesMenu";
 import { HostListing } from "./api";
+import { HelpMenu } from "./components/HelpMenu";
 
 interface AppbarProps {
     queryText: string;
@@ -18,6 +19,7 @@ export function Appbar({ queryText, currentGraph, onLoad, onInsertPrimitive }: A
                 <div className="flex items-center space-x-4">
                     <FileMenu queryText={queryText} currentGraph={currentGraph} onLoad={onLoad} />
                     <PrimitivesMenu onInsertPrimitive={onInsertPrimitive} />
+                    <HelpMenu />
                 </div>
                 <Image
                     src={motifStudioLogo}
