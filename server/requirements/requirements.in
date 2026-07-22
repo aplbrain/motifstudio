@@ -5,4 +5,4 @@ uvicorn[standard]
 dotmotif[neo4j]
 grand-cypher
 pandas
-git+https://github.com/aplbrain/grand-cypher-io
+grand-cypher-io==0.2.0
