@@ -5,6 +5,7 @@ flake8-bugbear
 isort
 pre-commit
 pytest
+pytest-asyncio
 safety
 pytest-picked
 pytest-testmon
