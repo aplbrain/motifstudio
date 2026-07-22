@@ -27,6 +27,8 @@ class TemporaryGraphHostProvider(SingleFileGraphHostProvider):
     Files are automatically expired after 14 days and cleaned up.
     """
 
+    ACCEPTED_UPLOAD_EXTENSIONS = (".graphml.gz", ".gexf.gz", ".graphml", ".gexf", ".gml", ".csv")
+
     def __init__(self, temp_dir: Optional[str] = None, expiration_days: int = 14):
         """Initialize the provider.
 
@@ -77,11 +79,11 @@ class TemporaryGraphHostProvider(SingleFileGraphHostProvider):
 
         return False  # Unknown temp ID
 
-    def store_file(self, file_content: bytes, original_filename: str) -> str:
-        """Store a file temporarily and return a temporary ID.
+    def store_file(self, source_path: str, original_filename: str) -> str:
+        """Move a validated upload into storage and return a temporary ID.
 
         Arguments:
-            file_content (bytes): The content of the uploaded file.
+            source_path (str): The path of the staged upload.
             original_filename (str): The original filename.
 
         Returns:
@@ -90,36 +92,38 @@ class TemporaryGraphHostProvider(SingleFileGraphHostProvider):
         # Generate a unique ID
         temp_id = str(uuid.uuid4())
 
-        # Determine file extension from original filename
-        file_ext = Path(original_filename).suffix
-        if not file_ext:
-            # Try to determine from content or default to .graphml
-            file_ext = ".graphml"
+        lower_filename = original_filename.lower()
+        file_ext = next(
+            (extension for extension in self.ACCEPTED_UPLOAD_EXTENSIONS if lower_filename.endswith(extension)),
+            None,
+        )
+        if file_ext is None:
+            raise ValueError(
+                "Unsupported graph format. Supported formats: GraphML, GEXF, GML, CSV, GraphML.gz, and GEXF.gz"
+            )
 
         # Create the temporary file path
         temp_filename = f"{temp_id}{file_ext}"
         temp_filepath = os.path.join(self.temp_dir, temp_filename)
 
-        # Write the file
-        with open(temp_filepath, "wb") as f:
-            f.write(file_content)
-
-        # Calculate expiration time
-        created_at = time.time()
-        expires_at = created_at + self.expiration_seconds
-
-        # Store the mapping with metadata
-        file_info = TemporaryFileInfo(
-            temp_id=temp_id,
-            filepath=temp_filepath,
-            original_filename=original_filename,
-            created_at=created_at,
-            expires_at=expires_at
-        )
-        self._uploaded_files[temp_id] = file_info
-
-        # Save metadata to disk for persistence
-        self._save_metadata()
+        os.replace(source_path, temp_filepath)
+        try:
+            created_at = time.time()
+            expires_at = created_at + self.expiration_seconds
+            file_info = TemporaryFileInfo(
+                temp_id=temp_id,
+                filepath=temp_filepath,
+                original_filename=original_filename,
+                created_at=created_at,
+                expires_at=expires_at
+            )
+            self._uploaded_files[temp_id] = file_info
+            self._save_metadata()
+        except Exception:
+            self._uploaded_files.pop(temp_id, None)
+            if os.path.exists(temp_filepath):
+                os.remove(temp_filepath)
+            raise
 
         return temp_id
 
