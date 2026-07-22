@@ -41,6 +41,26 @@ router = APIRouter(
 )
 
 
+def _run_graph_operation(commons: HostProviderRouterGlobalDep, func, *args):
+    """Run a graph operation using the configured memory and time limits."""
+    ram_limit = (
+        commons.max_ram_bytes
+        if commons.max_ram_bytes is not None
+        else int(get_total_ram_bytes() * commons.max_ram_pct)
+    )
+    try:
+        return run_with_limits(
+            func,
+            args=args,
+            max_ram_bytes=ram_limit,
+            timeout_seconds=commons.max_duration_seconds,
+        )
+    except TimeoutError as error:
+        raise HTTPException(status_code=504, detail=str(error)) from error
+    except MemoryError as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
+
+
 @router.get("/")
 def query_index(commons: Annotated[HostProviderRouterGlobalDep, Depends(provider_router)]) -> dict[str, list[str]]:
     """Get the root endpoint for the queries API.
@@ -84,22 +104,7 @@ def query_graph_download(
 
     tic = time.time()
 
-    # For resource limits, see below.
-    nx_graph, error_msg = provider.maybe_get_networkx_graph(uri)
-
-    # Enforce query resource limits
-    # ram_limit = commons.max_ram_bytes if commons.max_ram_bytes is not None else int(get_total_ram_bytes() * commons.max_ram_pct)
-    # try:
-    #     nx_graph, error_msg = run_with_limits(
-    #         provider.maybe_get_networkx_graph,
-    #         args=(uri,),
-    #         max_ram_bytes=ram_limit,
-    #         timeout_seconds=commons.max_duration_seconds,
-    #     )
-    # except TimeoutError as e:
-    #     raise HTTPException(status_code=504, detail=str(e))
-    # except MemoryError as e:
-    #     raise HTTPException(status_code=503, detail=str(e))
+    nx_graph, error_msg = _run_graph_operation(commons, provider.maybe_get_networkx_graph, uri)
 
     def _get_bytes(graph, fmt: _GraphFormats):
         # We never prettyprint because we have to send it over the wire next
@@ -120,14 +125,18 @@ def query_graph_download(
     if nx_graph is not None and accept != "application/json":
         # Return the file as a binary response:
         return Response(
-            content=_get_bytes(nx_graph, graph_download_query_request.format),
+            content=_run_graph_operation(commons, _get_bytes, nx_graph, graph_download_query_request.format),
             media_type=f"application/{graph_download_query_request.format}",
         )  # type: ignore
 
     return DownloadGraphQueryResponse(
         host_id=graph_download_query_request.host_id,
         format=graph_download_query_request.format,
-        graph=_get_bytes(nx_graph, graph_download_query_request.format) if nx_graph is not None else b"",
+        graph=(
+            _run_graph_operation(commons, _get_bytes, nx_graph, graph_download_query_request.format)
+            if nx_graph is not None
+            else b""
+        ),
         error=error_msg,
         response_time=datetime.datetime.now().isoformat(),
         response_duration_ms=(time.time() - tic) * 1000,
@@ -155,7 +164,7 @@ def query_count_vertices(
             detail=f"No provider found for host {vertex_count_query_request.host_id}",
         )
 
-    count = provider.get_vertex_count(uri)
+    count = _run_graph_operation(commons, provider.get_vertex_count, uri)
     return VertexCountQueryResponse(
         vertex_count=count,
         host_id=vertex_count_query_request.host_id,
@@ -185,7 +194,7 @@ def query_vertex_attributes(
             detail=f"No provider found for host {vertex_attribute_query_request.host_id}",
         )
 
-    attributes = provider.get_vertex_attribute_schema(uri)
+    attributes = _run_graph_operation(commons, provider.get_vertex_attribute_schema, uri)
     return VertexAttributeQueryResponse(
         attributes=attributes,
         host_id=vertex_attribute_query_request.host_id,
@@ -215,7 +224,7 @@ def query_count_edges(
             detail=f"No provider found for host {edge_count_query_request.host_id}",
         )
 
-    count = provider.get_edge_count(uri)
+    count = _run_graph_operation(commons, provider.get_edge_count, uri)
     return EdgeCountQueryResponse(
         edge_count=count,
         host_id=edge_count_query_request.host_id,
@@ -245,7 +254,7 @@ def query_edge_attributes(
             detail=f"No provider found for host {edge_attribute_query_request.host_id}",
         )
 
-    attributes = provider.get_edge_attribute_schema(uri)
+    attributes = _run_graph_operation(commons, provider.get_edge_attribute_schema, uri)
     return EdgeAttributeQueryResponse(
         attributes=attributes,
         host_id=edge_attribute_query_request.host_id,
