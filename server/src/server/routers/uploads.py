@@ -2,6 +2,7 @@
 
 import datetime
 import os
+import tempfile
 from typing import Annotated, List
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
@@ -25,6 +26,8 @@ router = APIRouter(
 # Global temporary provider instance
 # This will be shared across all requests
 _temp_provider = TemporaryGraphHostProvider()
+MAX_UPLOAD_BYTES = 100 * 1024 * 1024
+UPLOAD_CHUNK_BYTES = 1024 * 1024
 
 
 @router.post("/graph", response_model=GraphUploadResponse)
@@ -35,21 +38,34 @@ async def upload_graph(
 ) -> GraphUploadResponse:
     """Upload a graph file temporarily.
 
-    Supported formats: GraphML, GEXF, GML, CSV (edgelist), and their gzipped versions.
+    Supported formats: GraphML, GEXF, GML, CSV (edgelist), GraphML.gz, and GEXF.gz.
     """
+    staged_path = None
     try:
-        # Check file extension
         if not file.filename:
             raise HTTPException(status_code=400, detail="No filename provided")
 
-        # Read file content
-        content = await file.read()
+        lower_filename = file.filename.lower()
+        if not any(lower_filename.endswith(extension) for extension in _temp_provider.ACCEPTED_UPLOAD_EXTENSIONS):
+            raise HTTPException(status_code=415, detail="Unsupported graph format")
 
-        if len(content) == 0:
+        file_size = 0
+        with tempfile.NamedTemporaryFile(delete=False, dir=_temp_provider.temp_dir) as staged_file:
+            staged_path = staged_file.name
+            while chunk := await file.read(UPLOAD_CHUNK_BYTES):
+                file_size += len(chunk)
+                if file_size > MAX_UPLOAD_BYTES:
+                    raise HTTPException(
+                        status_code=413,
+                        detail=f"Upload exceeds the {MAX_UPLOAD_BYTES // (1024 * 1024)} MB limit",
+                    )
+                staged_file.write(chunk)
+
+        if file_size == 0:
             raise HTTPException(status_code=400, detail="Empty file uploaded")
 
-        # Store the file temporarily
-        temp_id = _temp_provider.store_file(content, file.filename)
+        temp_id = _temp_provider.store_file(staged_path, file.filename)
+        staged_path = None
 
         # Generate a display name
         display_name = name or file.filename
@@ -74,19 +90,19 @@ async def upload_graph(
         return GraphUploadResponse(
             temp_id=temp_id,
             original_filename=file.filename,
-            file_size=len(content),
+            file_size=file_size,
             success=True,
             error=None
         )
 
+    except HTTPException:
+        raise
     except Exception as e:
-        return GraphUploadResponse(
-            temp_id="",
-            original_filename=file.filename or "unknown",
-            file_size=0,
-            success=False,
-            error=str(e)
-        )
+        raise HTTPException(status_code=500, detail="Failed to store uploaded graph") from e
+    finally:
+        await file.close()
+        if staged_path and os.path.exists(staged_path):
+            os.remove(staged_path)
 
 
 @router.get("/temporary", response_model=List[TemporaryHostListing])
