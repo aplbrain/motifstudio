@@ -76,7 +76,7 @@ def get_total_ram_bytes() -> int:
         raise RuntimeError("Cannot determine total system memory; install psutil or implement OS support")
 
 
-def _run_with_limits_target(queue, func, args, kwargs, max_ram_bytes, timeout_seconds):
+def _run_with_limits_target(connection, func, args, kwargs, max_ram_bytes, timeout_seconds):
     """Helper target for run_with_limits: apply resource limits and execute func."""
     try:
         if max_ram_bytes is not None:
@@ -98,38 +98,43 @@ def _run_with_limits_target(queue, func, args, kwargs, max_ram_bytes, timeout_se
             except (ValueError, OSError):
                 pass
         result = func(*args, **kwargs)
-        queue.put((True, result))
+        connection.send((True, result))
     except Exception as e:
-        queue.put((False, e))
+        connection.send((False, e))
+    finally:
+        connection.close()
 
 
 def run_with_limits(func, args=(), kwargs=None, max_ram_bytes=None, timeout_seconds=None):
     """Run func in a subprocess with memory and time limits."""
     kwargs = kwargs or {}
-    queue = mp.Queue()
+    parent_connection, child_connection = mp.Pipe(duplex=False)
 
     proc = mp.Process(
         target=_run_with_limits_target,
-        args=(queue, func, args, kwargs, max_ram_bytes, timeout_seconds),
+        args=(child_connection, func, args, kwargs, max_ram_bytes, timeout_seconds),
     )
     proc.start()
-    proc.join(timeout_seconds)
-    if proc.is_alive():
-        proc.terminate()
-        proc.join(timeout_seconds)
-        # Ensure the process is killed if it did not exit
-        if proc.is_alive() and hasattr(proc, "kill"):
-            proc.kill()
-            proc.join(0)
-        print(f"Process terminated due to timeout after {timeout_seconds} seconds.")
-        raise TimeoutError(f"Query exceeded time limit of {timeout_seconds} seconds")
-    if queue.empty():
-        print(f"Process terminated unexpectedly, did not return a result, or exceeded {max_ram_bytes} bytes.")
-        raise MemoryError(f"Query exceeded memory limit of {max_ram_bytes} bytes or terminated unexpectedly")
-    success, payload = queue.get()
-    if success:
-        return payload
-    raise payload
+    child_connection.close()
+    try:
+        if not parent_connection.poll(timeout_seconds):
+            if proc.is_alive():
+                raise TimeoutError(f"Query exceeded time limit of {timeout_seconds} seconds")
+            raise MemoryError(f"Query exceeded memory limit of {max_ram_bytes} bytes or terminated unexpectedly")
+
+        success, payload = parent_connection.recv()
+        proc.join()
+        if success:
+            return payload
+        raise payload
+    finally:
+        parent_connection.close()
+        if proc.is_alive():
+            proc.terminate()
+            proc.join(timeout_seconds)
+            if proc.is_alive() and hasattr(proc, "kill"):
+                proc.kill()
+                proc.join()
 
 
 class HostProviderRouterGlobalDep:
