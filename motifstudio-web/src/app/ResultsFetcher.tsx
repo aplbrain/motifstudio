@@ -107,7 +107,7 @@ export function ResultsFetcher({
                                 if (typeof parsed === "string" || typeof parsed === "number") {
                                     value = parsed.toString();
                                 }
-                            } catch (e) {
+                            } catch {
                                 // If parsing fails, use as-is
                             }
                         }
@@ -213,13 +213,13 @@ export function ResultsFetcher({
                                             queryData?.host_volumetric_data?.uri,
                                             queryData?.host_volumetric_data?.other_channels || [],
                                             Object.values(result).map((v: any) => {
-                                                let id = v?.__segmentation_id__ || v.id;
+                                                const id = v?.__segmentation_id__ || v.id;
                                                 // For JSON-serialized values, try to parse them
                                                 if (typeof id === "string") {
                                                     try {
                                                         const parsed = JSON.parse(id);
                                                         return parsed;
-                                                    } catch (e) {
+                                                    } catch {
                                                         return id;
                                                     }
                                                 }
@@ -252,9 +252,8 @@ export function ResultsFetcher({
                                                         }
                                                     }
                                                     titleValue = JSON.stringify(parsed, null, 2);
-                                                } catch (e) {
+                                                } catch {
                                                     // If parsing fails, display as-is
-                                                    displayValue = displayValue;
                                                 }
                                             }
 

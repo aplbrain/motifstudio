@@ -1,4 +1,4 @@
-import Cytoscape from "cytoscape";
+import cytoscape from "cytoscape";
 import CytoscapeComponent from "react-cytoscapejs";
 import COSEBilkent from "cytoscape-cose-bilkent";
 import { useThrottle } from "./useDebounce";
@@ -8,12 +8,12 @@ import { useRef } from "react";
 import ColorHash from "color-hash";
 import { getQueryParams } from "./queryparams";
 
-Cytoscape.use(COSEBilkent);
+cytoscape.use(COSEBilkent);
 
 export const MotifVisualizer = ({ motifSource }: { motifSource: string }) => {
     // All React hooks must be called before any conditional returns
     const debouncedQuery = useThrottle(motifSource, 1000);
-    let elements = useRef<any[]>([]);
+    const elements = useRef<cytoscape.ElementDefinition[]>([]);
 
     // Get query type from URL parameters
     const { query_type } = typeof window !== "undefined" ? getQueryParams() : { query_type: "dotmotif" };
@@ -22,11 +22,12 @@ export const MotifVisualizer = ({ motifSource }: { motifSource: string }) => {
         lightness: 0.5,
     });
 
-    function hexHash(item: { id?: string }, opts = { seed: 0, without: [] }) {
-        const nodeWithoutID = { ...item, __seed: opts.seed };
+    function hexHash(item: { id?: string }, opts: { seed?: number; without?: string[] } = {}) {
+        const { seed = 0, without = [] } = opts;
+        const nodeWithoutID: Record<string, unknown> = { ...item, __seed: seed };
         delete nodeWithoutID.id;
-        opts.without.forEach((key) => {
-            delete (nodeWithoutID as any)[key];
+        without.forEach((key) => {
+            delete nodeWithoutID[key];
         });
         return colorhash.hex(JSON.stringify(nodeWithoutID));
     }
@@ -102,7 +103,7 @@ export const MotifVisualizer = ({ motifSource }: { motifSource: string }) => {
             layout={{
                 name: "cose-bilkent",
                 animate: false,
-            }}
+            } as cytoscape.LayoutOptions}
             elements={[...elements.current]}
             style={{ width: "100%", height: "100%", minHeight: "400px" }}
             stylesheet={[

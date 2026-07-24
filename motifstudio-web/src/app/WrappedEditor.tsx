@@ -179,13 +179,13 @@ export function WrappedEditor({
             height="40vh"
             theme={prefersDark ? "motiftheme-dark" : "motiftheme"}
             beforeMount={handleEditorWillMount}
-            onChange={(value, event) => {
+            onChange={(value) => {
                 if (onChange) {
                     onChange(value);
                 }
             }}
-            onMount={(editor, monaco) => {
-                onChange ? onChange(editor.getValue()) : null;
+            onMount={(editor) => {
+                onChange?.(editor.getValue());
             }}
             defaultLanguage={getLanguage()}
             language={getLanguage()}
