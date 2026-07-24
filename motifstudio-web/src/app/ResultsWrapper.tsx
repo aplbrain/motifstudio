@@ -30,7 +30,14 @@ export function ResultsWrapper({
                     Run Query
                 </button>
             ) : null}
-            {trigger ? <ResultsFetcher graph={graph} query={query} queryType={queryType} /> : null}
+            {trigger ? (
+                <ResultsFetcher
+                    key={`${graph?.id}:${query}:${queryType}`}
+                    graph={graph}
+                    query={query}
+                    queryType={queryType}
+                />
+            ) : null}
         </div>
     );
 }

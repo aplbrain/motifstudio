@@ -15,6 +15,7 @@ import resource
 import multiprocessing as mp
 import platform
 import subprocess
+import time
 
 
 from ..host_provider.router import HostProvider, HostProviderRouter, provider_name_map
@@ -105,7 +106,7 @@ def _run_with_limits_target(connection, func, args, kwargs, max_ram_bytes, timeo
         connection.close()
 
 
-def run_with_limits(func, args=(), kwargs=None, max_ram_bytes=None, timeout_seconds=None):
+def run_with_limits(func, args=(), kwargs=None, max_ram_bytes=None, timeout_seconds=None, cancel_event=None):
     """Run func in a subprocess with memory and time limits."""
     kwargs = kwargs or {}
     parent_connection, child_connection = mp.Pipe(duplex=False)
@@ -116,11 +117,15 @@ def run_with_limits(func, args=(), kwargs=None, max_ram_bytes=None, timeout_seco
     )
     proc.start()
     child_connection.close()
+    started_at = time.monotonic()
     try:
-        if not parent_connection.poll(timeout_seconds):
-            if proc.is_alive():
+        while not parent_connection.poll(0.1):
+            if cancel_event is not None and cancel_event.is_set():
+                raise InterruptedError("Query cancelled because the client disconnected")
+            if not proc.is_alive():
+                raise MemoryError(f"Query exceeded memory limit of {max_ram_bytes} bytes or terminated unexpectedly")
+            if timeout_seconds is not None and time.monotonic() - started_at >= timeout_seconds:
                 raise TimeoutError(f"Query exceeded time limit of {timeout_seconds} seconds")
-            raise MemoryError(f"Query exceeded memory limit of {max_ram_bytes} bytes or terminated unexpectedly")
 
         success, payload = parent_connection.recv()
         proc.join()
