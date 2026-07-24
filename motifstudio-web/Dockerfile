@@ -3,7 +3,7 @@
 # and then copy the build into a new environment for static serving.
 
 # Build environment
-FROM node:18-alpine as build
+FROM node:22-alpine as build
 
 # Set working directory
 WORKDIR /app
