@@ -27,3 +27,12 @@ def test_can_count_motifs():
         r = FilesystemGraphHostProvider()
         # Query the provider for the motif count.
         assert r.get_motif_count(uri, "A->B") == 12
+
+
+def test_can_read_compressed_graphml():
+    g = nx.path_graph(4)
+    with tempfile.NamedTemporaryFile(suffix=".graphml.gz") as f:
+        nx.write_graphml(g, f.name)
+        provider = FilesystemGraphHostProvider()
+
+        assert nx.is_isomorphic(g, provider.get_networkx_graph("file://" + f.name))

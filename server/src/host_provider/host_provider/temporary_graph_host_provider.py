@@ -211,26 +211,15 @@ class TemporaryGraphHostProvider(SingleFileGraphHostProvider):
             if len(df.columns) < 2:
                 raise ValueError("CSV file must have at least 2 columns for source and target nodes")
 
-            # Create graph from edgelist
-            G = nx.Graph()
-
-            # Get column names
             source_col = df.columns[0]
             target_col = df.columns[1]
-
-            # Add edges
-            for _, row in df.iterrows():
-                source = row[source_col]
-                target = row[target_col]
-
-                # Add edge with any additional attributes
-                edge_attrs = {}
-                for col in df.columns[2:]:
-                    edge_attrs[col] = row[col]
-
-                G.add_edge(source, target, **edge_attrs)
-
-            return G
+            return nx.from_pandas_edgelist(
+                df,
+                source=source_col,
+                target=target_col,
+                edge_attr=list(df.columns[2:]) or None,
+                create_using=nx.Graph,
+            )
 
         except Exception as e:
             # If CSV reading fails, try as plain text edgelist
