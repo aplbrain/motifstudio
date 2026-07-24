@@ -64,11 +64,9 @@ async def upload_graph(
         if file_size == 0:
             raise HTTPException(status_code=400, detail="Empty file uploaded")
 
-        temp_id = _temp_provider.store_file(staged_path, file.filename)
-        staged_path = None
-
-        # Generate a display name
         display_name = name or file.filename
+        temp_id = _temp_provider.store_file(staged_path, file.filename, display_name)
+        staged_path = None
 
         # Add temporary host to the router with proper HostListing
         temp_uri = f"temp://{temp_id}"
@@ -186,4 +184,21 @@ def get_temporary_graph_info(
     }
 
 
-__all__ = ["router"]
+def sync_temporary_hosts(commons: HostProviderRouterGlobalDep) -> None:
+    """Rebuild temporary host routing from durable provider metadata."""
+    commons.temporary_hosts = [
+        HostListing(
+            id=temp_id,
+            uri=f"temp://{temp_id}",
+            name=info.get("display_name", info["original_filename"]),
+            provider={"@id": "TemporaryGraphHostProvider"},
+            volumetric_data={},
+        )
+        for temp_id in _temp_provider.list_temporary_files()
+        if (info := _temp_provider.get_file_info(temp_id))
+    ]
+    if "TemporaryGraphHostProvider" not in commons.host_provider_router._providers:
+        commons.host_provider_router.add_provider("TemporaryGraphHostProvider", _temp_provider)
+
+
+__all__ = ["router", "sync_temporary_hosts"]

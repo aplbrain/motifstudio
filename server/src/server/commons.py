@@ -190,6 +190,10 @@ class HostProviderRouterGlobalDep:
             str | None: The URI of the host, or None if it doesn't exist.
 
         """
+        from .routers.uploads import sync_temporary_hosts
+
+        sync_temporary_hosts(self)
+
         # Check public hosts first
         for host in self.all_hosts:
             if host.id == id:

@@ -19,6 +19,7 @@ class TemporaryFileInfo(NamedTuple):
     temp_id: str
     filepath: str
     original_filename: str
+    display_name: str
     created_at: float
     expires_at: float
 
@@ -84,7 +85,7 @@ class TemporaryGraphHostProvider(SingleFileGraphHostProvider):
 
         return False  # Unknown temp ID
 
-    def store_file(self, source_path: str, original_filename: str) -> str:
+    def store_file(self, source_path: str, original_filename: str, display_name: str | None = None) -> str:
         """Move a validated upload into storage and return a temporary ID.
 
         Arguments:
@@ -120,6 +121,7 @@ class TemporaryGraphHostProvider(SingleFileGraphHostProvider):
                     temp_id=temp_id,
                     filepath=temp_filepath,
                     original_filename=original_filename,
+                    display_name=display_name or original_filename,
                     created_at=created_at,
                     expires_at=expires_at
                 )
@@ -248,6 +250,7 @@ class TemporaryGraphHostProvider(SingleFileGraphHostProvider):
                 continue
             result[temp_id] = {
                 "original_filename": file_info.original_filename,
+                "display_name": file_info.display_name,
                 "filepath": file_info.filepath,
                 "created_at": str(file_info.created_at),
                 "expires_at": str(file_info.expires_at)
@@ -282,6 +285,7 @@ class TemporaryGraphHostProvider(SingleFileGraphHostProvider):
             "temp_id": temp_id,
             "filepath": file_info.filepath,
             "original_filename": file_info.original_filename,
+            "display_name": file_info.display_name,
             "filename": os.path.basename(file_info.filepath),
             "size": str(stat.st_size),
             "created_at": str(file_info.created_at),
@@ -306,6 +310,7 @@ class TemporaryGraphHostProvider(SingleFileGraphHostProvider):
                         temp_id=temp_id,
                         filepath=file_data["filepath"],
                         original_filename=file_data["original_filename"],
+                        display_name=file_data.get("display_name", file_data["original_filename"]),
                         created_at=file_data["created_at"],
                         expires_at=file_data["expires_at"]
                     )
@@ -322,6 +327,7 @@ class TemporaryGraphHostProvider(SingleFileGraphHostProvider):
             data[temp_id] = {
                 "filepath": file_info.filepath,
                 "original_filename": file_info.original_filename,
+                "display_name": file_info.display_name,
                 "created_at": file_info.created_at,
                 "expires_at": file_info.expires_at
             }
@@ -360,6 +366,18 @@ class TemporaryGraphHostProvider(SingleFileGraphHostProvider):
 
         for temp_id in expired_ids:
             self.cleanup_file(temp_id)
+
+    def cleanup_expired_files(self) -> list[str]:
+        """Remove expired uploads and return their IDs."""
+        self._load_existing_files()
+        expired_ids = [
+            temp_id
+            for temp_id, file_info in self._uploaded_files.items()
+            if time.time() > file_info.expires_at
+        ]
+        for temp_id in expired_ids:
+            self.cleanup_file(temp_id)
+        return expired_ids
 
     def _cleanup_single_file(self, temp_id: str):
         """Clean up a single temporary file without saving metadata."""

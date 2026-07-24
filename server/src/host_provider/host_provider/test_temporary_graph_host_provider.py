@@ -28,3 +28,12 @@ def test_metadata_replacement_always_produces_valid_json(tmp_path):
     metadata = Path(provider.metadata_file)
     assert json.loads(metadata.read_text())
     assert not list(metadata.parent.glob("metadata.*.tmp"))
+
+
+def test_display_name_survives_provider_restart(tmp_path):
+    provider = TemporaryGraphHostProvider(str(tmp_path))
+    temp_id = provider.store_file(_stage_file(tmp_path, "graph.csv"), "graph.csv", "My graph")
+
+    restarted = TemporaryGraphHostProvider(str(tmp_path))
+
+    assert restarted.get_file_info(temp_id)["display_name"] == "My graph"

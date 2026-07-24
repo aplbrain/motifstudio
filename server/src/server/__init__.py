@@ -7,6 +7,8 @@ FastAPI. Requests are handled by the endpoints defined in this file.
 """
 
 import datetime
+import asyncio
+from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,7 +19,25 @@ from .routers import host_providers, queries, uploads
 __version__ = "0.1.0"
 
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    commons = provider_router()
+    uploads.sync_temporary_hosts(commons)
+
+    async def cleanup_expired_uploads():
+        while True:
+            await asyncio.sleep(60 * 60)
+            uploads._temp_provider.cleanup_expired_files()
+            uploads.sync_temporary_hosts(commons)
+
+    cleanup_task = asyncio.create_task(cleanup_expired_uploads())
+    try:
+        yield
+    finally:
+        cleanup_task.cancel()
+
+
+app = FastAPI(lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
