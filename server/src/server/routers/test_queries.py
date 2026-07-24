@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 import pytest
 from fastapi import HTTPException
 
-from .queries import _run_graph_operation
+from .queries import _run_graph_operation, _serialize_graph
 
 
 def _commons():
@@ -40,3 +40,15 @@ def test_graph_operation_returns_service_unavailable_for_memory_limit():
             _run_graph_operation(_commons(), Mock())
 
     assert error.value.status_code == 503
+
+
+def test_serialize_graph_writes_a_temporary_file():
+    import os
+
+    import networkx as nx
+
+    path = _serialize_graph(nx.path_graph(3), "graphml")
+    try:
+        assert os.path.getsize(path) > 0
+    finally:
+        os.unlink(path)

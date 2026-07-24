@@ -2,12 +2,15 @@
 
 import datetime
 import json
+import os
 import tempfile
 import time
 from typing import Annotated
 
 import networkx as nx
-from fastapi import APIRouter, Depends, HTTPException, Header, Response
+from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi.responses import FileResponse
+from starlette.background import BackgroundTask
 from dotmotif import Motif
 import grandcypher
 from ...models import (
@@ -61,6 +64,32 @@ def _run_graph_operation(commons: HostProviderRouterGlobalDep, func, *args):
         raise HTTPException(status_code=503, detail=str(error)) from error
 
 
+def _serialize_graph(graph, fmt: _GraphFormats) -> str:
+    """Serialize a graph to a temporary file and return its path."""
+    with tempfile.NamedTemporaryFile(suffix=f".{fmt}", delete=False) as temporary_file:
+        path = temporary_file.name
+    try:
+        if fmt in ["graphml", "graphml.gz"]:
+            nx.write_graphml(graph, path, prettyprint=False)
+        elif fmt in ["gexf", "gexf.gz"]:
+            nx.write_gexf(graph, path, prettyprint=False)
+        else:
+            raise ValueError(f"Unknown graph format {fmt}")
+        return path
+    except Exception:
+        os.unlink(path)
+        raise
+
+
+def _read_and_remove(path: str) -> bytes:
+    """Read a temporary file and remove it."""
+    try:
+        with open(path, "rb") as serialized_graph:
+            return serialized_graph.read()
+    finally:
+        os.unlink(path)
+
+
 @router.get("/")
 def query_index(commons: Annotated[HostProviderRouterGlobalDep, Depends(provider_router)]) -> dict[str, list[str]]:
     """Get the root endpoint for the queries API.
@@ -106,34 +135,21 @@ def query_graph_download(
 
     nx_graph, error_msg = _run_graph_operation(commons, provider.maybe_get_networkx_graph, uri)
 
-    def _get_bytes(graph, fmt: _GraphFormats):
-        # We never prettyprint because we have to send it over the wire next
-        # and there's no point in increasing the transfer size.
-        # Create a temp file:
-        with tempfile.NamedTemporaryFile(suffix=f".{fmt}") as tmp:
-            if fmt in ["graphml", "graphml.gz"]:
-                nx.write_graphml(graph, tmp.name, prettyprint=False)
-                with open(tmp.name, "rb") as f:
-                    return f.read()
-            elif fmt in ["gexf", "gexf.gz"]:
-                nx.write_gexf(graph, tmp.name, prettyprint=False)
-                with open(tmp.name, "rb") as f:
-                    return f.read()
-            else:
-                raise ValueError(f"Unknown graph format {fmt}")
-
     if nx_graph is not None and accept != "application/json":
-        # Return the file as a binary response:
-        return Response(
-            content=_run_graph_operation(commons, _get_bytes, nx_graph, graph_download_query_request.format),
+        path = _run_graph_operation(commons, _serialize_graph, nx_graph, graph_download_query_request.format)
+        return FileResponse(
+            path,
             media_type=f"application/{graph_download_query_request.format}",
-        )  # type: ignore
+            background=BackgroundTask(os.unlink, path),
+        )
 
     return DownloadGraphQueryResponse(
         host_id=graph_download_query_request.host_id,
         format=graph_download_query_request.format,
         graph=(
-            _run_graph_operation(commons, _get_bytes, nx_graph, graph_download_query_request.format)
+            _read_and_remove(
+                _run_graph_operation(commons, _serialize_graph, nx_graph, graph_download_query_request.format)
+            )
             if nx_graph is not None
             else b""
         ),
