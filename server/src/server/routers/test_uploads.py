@@ -49,3 +49,15 @@ async def test_upload_rejects_empty_files():
         await uploads.upload_graph(upload, commons=StubCommons())
 
     assert error.value.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_upload_rejects_invalid_graph_content():
+    upload = UploadFile(filename="graph.graphml", file=io.BytesIO(b"not graphml"))
+    commons = StubCommons()
+
+    with pytest.raises(HTTPException) as error:
+        await uploads.upload_graph(upload, commons=commons)
+
+    assert error.value.status_code == 422
+    assert commons.temporary_hosts == []

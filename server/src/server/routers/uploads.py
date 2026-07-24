@@ -65,6 +65,11 @@ async def upload_graph(
             raise HTTPException(status_code=400, detail="Empty file uploaded")
 
         display_name = name or file.filename
+        try:
+            _temp_provider.validate_file(staged_path, file.filename)
+        except Exception as error:
+            raise HTTPException(status_code=422, detail=f"Invalid graph file: {error}") from error
+
         temp_id = _temp_provider.store_file(staged_path, file.filename, display_name)
         staged_path = None
 
@@ -139,11 +144,9 @@ def cleanup_temporary_graph(
 ) -> GraphUploadCleanupResponse:
     """Clean up a temporarily uploaded graph."""
     try:
-        # Remove from temporary hosts list
-        commons.remove_temporary_host(temp_id)
-
-        # Cleanup the file
         success = _temp_provider.cleanup_file(temp_id)
+        if success:
+            commons.remove_temporary_host(temp_id)
 
         return GraphUploadCleanupResponse(
             temp_id=temp_id,
@@ -151,12 +154,8 @@ def cleanup_temporary_graph(
             error=None if success else "Failed to cleanup file"
         )
 
-    except Exception as e:
-        return GraphUploadCleanupResponse(
-            temp_id=temp_id,
-            success=False,
-            error=str(e)
-        )
+    except Exception as error:
+        raise HTTPException(status_code=500, detail="Failed to cleanup temporary graph") from error
 
 
 @router.get("/temporary/{temp_id}/info")
