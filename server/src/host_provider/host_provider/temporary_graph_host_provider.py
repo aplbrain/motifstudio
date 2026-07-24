@@ -3,9 +3,11 @@
 import os
 import tempfile
 import uuid
+import fcntl
 import pandas as pd
 import time
 import json
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Dict, Optional, NamedTuple
 from .SingleFileHostProvider import SingleFileGraphHostProvider
@@ -43,6 +45,8 @@ class TemporaryGraphHostProvider(SingleFileGraphHostProvider):
         self.temp_dir = temp_dir or tempfile.gettempdir()
         self.temp_dir = os.path.join(self.temp_dir, "motifstudio_uploads")
         os.makedirs(self.temp_dir, exist_ok=True)
+        self.metadata_file = os.path.join(self.temp_dir, "metadata.json")
+        self.lock_file = os.path.join(self.temp_dir, "metadata.lock")
 
         self.expiration_days = expiration_days
         self.expiration_seconds = expiration_days * 24 * 60 * 60
@@ -63,6 +67,7 @@ class TemporaryGraphHostProvider(SingleFileGraphHostProvider):
 
     def accepts(self, uri: str) -> bool:
         """Return True if the URI is a temporary file URI."""
+        self._load_existing_files()
         if not uri.startswith("temp://"):
             return False
 
@@ -106,24 +111,25 @@ class TemporaryGraphHostProvider(SingleFileGraphHostProvider):
         temp_filename = f"{temp_id}{file_ext}"
         temp_filepath = os.path.join(self.temp_dir, temp_filename)
 
-        os.replace(source_path, temp_filepath)
-        try:
-            created_at = time.time()
-            expires_at = created_at + self.expiration_seconds
-            file_info = TemporaryFileInfo(
-                temp_id=temp_id,
-                filepath=temp_filepath,
-                original_filename=original_filename,
-                created_at=created_at,
-                expires_at=expires_at
-            )
-            self._uploaded_files[temp_id] = file_info
-            self._save_metadata()
-        except Exception:
-            self._uploaded_files.pop(temp_id, None)
-            if os.path.exists(temp_filepath):
-                os.remove(temp_filepath)
-            raise
+        with self._metadata_transaction():
+            os.replace(source_path, temp_filepath)
+            try:
+                created_at = time.time()
+                expires_at = created_at + self.expiration_seconds
+                file_info = TemporaryFileInfo(
+                    temp_id=temp_id,
+                    filepath=temp_filepath,
+                    original_filename=original_filename,
+                    created_at=created_at,
+                    expires_at=expires_at
+                )
+                self._uploaded_files[temp_id] = file_info
+                self._save_metadata()
+            except Exception:
+                self._uploaded_files.pop(temp_id, None)
+                if os.path.exists(temp_filepath):
+                    os.remove(temp_filepath)
+                raise
 
         return temp_id
 
@@ -136,6 +142,7 @@ class TemporaryGraphHostProvider(SingleFileGraphHostProvider):
         Returns:
             nx.Graph: The NetworkX graph.
         """
+        self._load_existing_files()
         if not uri.startswith("temp://"):
             raise ValueError(f"Invalid temporary URI: {uri}")
 
@@ -214,16 +221,15 @@ class TemporaryGraphHostProvider(SingleFileGraphHostProvider):
         Returns:
             bool: True if the file was successfully cleaned up.
         """
-        if temp_id not in self._uploaded_files:
-            return False
-
-        file_info = self._uploaded_files[temp_id]
-
         try:
-            if os.path.exists(file_info.filepath):
-                os.remove(file_info.filepath)
-            del self._uploaded_files[temp_id]
-            self._save_metadata()
+            with self._metadata_transaction():
+                if temp_id not in self._uploaded_files:
+                    return False
+                file_info = self._uploaded_files[temp_id]
+                if os.path.exists(file_info.filepath):
+                    os.remove(file_info.filepath)
+                del self._uploaded_files[temp_id]
+                self._save_metadata()
             return True
         except Exception:
             return False
@@ -234,6 +240,7 @@ class TemporaryGraphHostProvider(SingleFileGraphHostProvider):
         Returns:
             Dict[str, Dict[str, str]]: A mapping of temp_id to file information.
         """
+        self._load_existing_files()
         result = {}
         for temp_id, file_info in self._uploaded_files.items():
             # Skip expired files
@@ -256,6 +263,7 @@ class TemporaryGraphHostProvider(SingleFileGraphHostProvider):
         Returns:
             Optional[Dict[str, str]]: File information or None if not found.
         """
+        self._load_existing_files()
         if temp_id not in self._uploaded_files:
             return None
 
@@ -282,15 +290,15 @@ class TemporaryGraphHostProvider(SingleFileGraphHostProvider):
 
     def _load_existing_files(self):
         """Load existing temporary files from disk metadata."""
-        metadata_file = os.path.join(self.temp_dir, "metadata.json")
-
-        if not os.path.exists(metadata_file):
+        if not os.path.exists(self.metadata_file):
+            self._uploaded_files = {}
             return
 
         try:
-            with open(metadata_file, "r") as f:
+            with open(self.metadata_file, "r") as f:
                 data = json.load(f)
 
+            uploaded_files = {}
             for temp_id, file_data in data.items():
                 # Verify the file still exists
                 if os.path.exists(file_data["filepath"]):
@@ -301,30 +309,45 @@ class TemporaryGraphHostProvider(SingleFileGraphHostProvider):
                         created_at=file_data["created_at"],
                         expires_at=file_data["expires_at"]
                     )
-                    self._uploaded_files[temp_id] = file_info
+                    uploaded_files[temp_id] = file_info
+            self._uploaded_files = uploaded_files
 
         except (json.JSONDecodeError, KeyError, OSError) as e:
             print(f"Warning: Failed to load temporary files metadata: {e}")
 
     def _save_metadata(self):
         """Save metadata about temporary files to disk."""
-        metadata_file = os.path.join(self.temp_dir, "metadata.json")
+        data = {}
+        for temp_id, file_info in self._uploaded_files.items():
+            data[temp_id] = {
+                "filepath": file_info.filepath,
+                "original_filename": file_info.original_filename,
+                "created_at": file_info.created_at,
+                "expires_at": file_info.expires_at
+            }
 
+        fd, temporary_path = tempfile.mkstemp(dir=self.temp_dir, prefix="metadata.", suffix=".tmp")
         try:
-            data = {}
-            for temp_id, file_info in self._uploaded_files.items():
-                data[temp_id] = {
-                    "filepath": file_info.filepath,
-                    "original_filename": file_info.original_filename,
-                    "created_at": file_info.created_at,
-                    "expires_at": file_info.expires_at
-                }
+            with os.fdopen(fd, "w") as temporary_file:
+                json.dump(data, temporary_file, indent=2)
+                temporary_file.flush()
+                os.fsync(temporary_file.fileno())
+            os.replace(temporary_path, self.metadata_file)
+        except Exception:
+            if os.path.exists(temporary_path):
+                os.remove(temporary_path)
+            raise
 
-            with open(metadata_file, "w") as f:
-                json.dump(data, f, indent=2)
-
-        except OSError as e:
-            print(f"Warning: Failed to save temporary files metadata: {e}")
+    @contextmanager
+    def _metadata_transaction(self):
+        """Lock, refresh, and persist one metadata mutation atomically."""
+        with open(self.lock_file, "a+") as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            try:
+                self._load_existing_files()
+                yield
+            finally:
+                fcntl.flock(lock, fcntl.LOCK_UN)
 
     def _cleanup_expired_files(self):
         """Clean up expired temporary files."""
@@ -336,11 +359,7 @@ class TemporaryGraphHostProvider(SingleFileGraphHostProvider):
                 expired_ids.append(temp_id)
 
         for temp_id in expired_ids:
-            self._cleanup_single_file(temp_id)
-
-        # Save metadata after cleanup
-        if expired_ids:
-            self._save_metadata()
+            self.cleanup_file(temp_id)
 
     def _cleanup_single_file(self, temp_id: str):
         """Clean up a single temporary file without saving metadata."""
