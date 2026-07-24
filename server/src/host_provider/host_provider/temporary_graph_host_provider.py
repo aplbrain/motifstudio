@@ -91,6 +91,7 @@ class TemporaryGraphHostProvider(SingleFileGraphHostProvider):
         Arguments:
             source_path (str): The path of the staged upload.
             original_filename (str): The original filename.
+            display_name (str): Optional name shown for the uploaded graph.
 
         Returns:
             str: A temporary ID that can be used to reference the file.
