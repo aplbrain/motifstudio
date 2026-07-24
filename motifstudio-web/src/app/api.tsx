@@ -37,7 +37,11 @@ export const neuroglancerUrlFromHostVolumetricData = (
 
 export const fetcher = async (...args: any[]) => {
     const res = await fetch(...(args as [RequestInfo, RequestInit]));
-    return res.json();
+    const data = await res.json().catch(() => null);
+    if (!res.ok) {
+        throw new Error(data?.detail || data?.error || `Request failed with status ${res.status}`);
+    }
+    return data;
 };
 
 export const bodiedFetcher = async (url: string, body: any, ...args: any[]) => {

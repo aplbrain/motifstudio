@@ -101,14 +101,20 @@ export function GraphStats({
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                Accept: format,
+                Accept: "application/octet-stream",
             },
             body: JSON.stringify({
                 host_id: graph.id,
                 format: format,
             }),
         })
-            .then((res) => res.blob())
+            .then(async (res) => {
+                if (!res.ok) {
+                    const data = await res.json().catch(() => null);
+                    throw new Error(data?.detail || `Download failed with status ${res.status}`);
+                }
+                return res.blob();
+            })
             .then((blob) => {
                 // Create a URL for the blob and create a link to download it.
                 const url = URL.createObjectURL(blob);
@@ -116,6 +122,7 @@ export function GraphStats({
                 a.href = url;
                 a.download = `${graph.name}.${format}`;
                 a.click();
+                URL.revokeObjectURL(url);
             })
             .catch((error) => {
                 console.error("Download failed:", error);
