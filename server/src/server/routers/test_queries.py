@@ -3,6 +3,7 @@ from unittest.mock import Mock, patch
 import pytest
 from fastapi import HTTPException
 
+from ...models import DownloadGraphQueryRequest
 from .queries import _run_graph_operation, _serialize_graph
 
 
@@ -52,3 +53,7 @@ def test_serialize_graph_writes_a_temporary_file():
         assert os.path.getsize(path) > 0
     finally:
         os.unlink(path)
+
+
+def test_graph_download_defaults_to_graphml():
+    assert DownloadGraphQueryRequest(host_id="graph").format == "graphml"

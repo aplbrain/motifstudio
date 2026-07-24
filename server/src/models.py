@@ -12,7 +12,7 @@ _MotifResultsAggregatedHostVertex = dict[_HostVertexID, dict[_MotifVertexID, int
 _MotifResultsAggregatedMotifVertex = dict[_MotifVertexID, dict[_HostVertexID, int]]
 _MotifResultsAggregatedMotifVertexAttribute = dict[_MotifVertexID, dict[str, int]]
 _AttributeType = Literal["str", "int", "float", "bool", "datetime.datetime"] | None
-_GraphFormats = Literal["graphml", "graphml.gz", "gexf", "gexf.gz"] | None
+_GraphFormats = Literal["graphml", "graphml.gz", "gexf", "gexf.gz"]
 _QueryType = Literal["dotmotif", "cypher"]
 AttributeSchema = dict[str, _AttributeType]
 HostProviderID = str
@@ -211,11 +211,8 @@ class DownloadGraphQueryRequest(_QueryRequestBase):
     """A request to download a graph from a host provider."""
 
     format: _GraphFormats = Field(
-        None,
-        description=(
-            "The format to download the graph in. If not specified, "
-            "the default format for the host provider will be used."
-        ),
+        "graphml",
+        description="The format to download the graph in.",
     )
 
 
@@ -223,11 +220,8 @@ class DownloadGraphQueryResponse(_QueryResponseBase):
     """A response to a request to download a graph from a host provider."""
 
     format: _GraphFormats = Field(
-        None,
-        description=(
-            "The format to download the graph in. If not specified, "
-            "the default format for the host provider will be used."
-        ),
+        "graphml",
+        description="The format used to encode the downloaded graph.",
     )
     graph: bytes = Field(
         ...,

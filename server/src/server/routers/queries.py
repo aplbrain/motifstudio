@@ -139,7 +139,8 @@ def query_graph_download(
         path = _run_graph_operation(commons, _serialize_graph, nx_graph, graph_download_query_request.format)
         return FileResponse(
             path,
-            media_type=f"application/{graph_download_query_request.format}",
+            media_type="application/octet-stream",
+            filename=f"graph.{graph_download_query_request.format}",
             background=BackgroundTask(os.unlink, path),
         )
 
