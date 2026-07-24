@@ -1,4 +1,5 @@
 "use client";
+import { useEffect, useState } from "react";
 import useSWR from "swr";
 import { HostListing, bodiedFetcher, BASE_URL, neuroglancerUrlFromHostVolumetricData } from "./api";
 import { useDebounce } from "./useDebounce";
@@ -14,17 +15,26 @@ export function ResultsFetcher({
     queryType: "dotmotif" | "cypher";
 }) {
     const debouncedQuery = useDebounce(query, 500);
+    const [controller] = useState(() => new AbortController());
+
+    useEffect(() => {
+        return () => controller.abort();
+    }, [controller]);
 
     const {
         data: queryData,
         error: queryError,
         isLoading: queryIsLoading,
     } = useSWR([`${BASE_URL}/queries/motifs`, graph?.id, debouncedQuery, queryType], () =>
-        bodiedFetcher(`${BASE_URL}/queries/motifs`, {
-            host_id: graph?.id,
-            query: debouncedQuery,
-            query_type: queryType,
-        })
+        bodiedFetcher(
+            `${BASE_URL}/queries/motifs`,
+            {
+                host_id: graph?.id,
+                query: debouncedQuery,
+                query_type: queryType,
+            },
+            { signal: controller.signal }
+        )
     );
 
     if (queryIsLoading) return <LoadingSpinner />;

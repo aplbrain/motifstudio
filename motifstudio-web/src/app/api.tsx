@@ -44,10 +44,12 @@ export const fetcher = async (...args: any[]) => {
     return data;
 };
 
-export const bodiedFetcher = async (url: string, body: any, ...args: any[]) => {
+export const bodiedFetcher = async (url: string, body: any, init: RequestInit = {}) => {
     return fetcher(url, {
+        ...init,
         method: "POST",
         headers: {
+            ...init.headers,
             "Content-Type": "application/json",
         },
         body: JSON.stringify(body),

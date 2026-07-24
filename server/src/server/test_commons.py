@@ -1,4 +1,5 @@
 import time
+import multiprocessing as mp
 
 import pytest
 
@@ -29,3 +30,11 @@ def test_run_with_limits_propagates_errors():
 def test_run_with_limits_terminates_timed_out_processes():
     with pytest.raises(TimeoutError):
         run_with_limits(_sleep, timeout_seconds=0.05)
+
+
+def test_run_with_limits_cancels_running_processes():
+    cancel_event = mp.Event()
+    cancel_event.set()
+
+    with pytest.raises(InterruptedError):
+        run_with_limits(_sleep, timeout_seconds=5, cancel_event=cancel_event)

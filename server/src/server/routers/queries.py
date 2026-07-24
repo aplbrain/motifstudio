@@ -5,10 +5,12 @@ import json
 import os
 import tempfile
 import time
+import asyncio
+import multiprocessing as mp
 from typing import Annotated
 
 import networkx as nx
-from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi import APIRouter, Depends, HTTPException, Header, Request
 from fastapi.responses import FileResponse
 from starlette.background import BackgroundTask
 from dotmotif import Motif
@@ -467,9 +469,10 @@ def query_parse_motif(
 
 
 @router.post("/motifs")
-def query_motifs(
+async def query_motifs(
     motif_query_request: MotifQueryRequest,
     commons: Annotated[HostProviderRouterGlobalDep, Depends(provider_router)],
+    request: Request,
 ) -> MotifQueryResponse:
     """Get a list of the motifs for a given host.
 
@@ -502,23 +505,39 @@ def query_motifs(
             detail=f"No provider found for host {motif_query_request.host_id}",
         )
 
+    cancel_event = mp.Event()
+
+    async def watch_disconnect():
+        while not cancel_event.is_set():
+            if await request.is_disconnected():
+                cancel_event.set()
+                return
+            await asyncio.sleep(0.1)
+
+    watcher = asyncio.create_task(watch_disconnect())
     try:
         # Handle different query types
         if motif_query_request.query_type == "cypher":
             # For Cypher queries, we need to get the host graph first
             # Check if provider supports NetworkX graphs
             if isinstance(provider, NetworkXHostProvider):
-                host_graph = run_with_limits(
+                host_graph = await asyncio.to_thread(
+                    run_with_limits,
                     provider.get_networkx_graph,
-                    args=(uri,),
-                    max_ram_bytes=ram_limit,
-                    timeout_seconds=timeout,
+                    (uri,),
+                    None,
+                    ram_limit,
+                    timeout,
+                    cancel_event,
                 )
-                results = run_with_limits(
+                results = await asyncio.to_thread(
+                    run_with_limits,
                     grandcypher.GrandCypher(host_graph).run,
-                    args=(motif_query_request.query,),
-                    max_ram_bytes=ram_limit,
-                    timeout_seconds=timeout,
+                    (motif_query_request.query,),
+                    None,
+                    ram_limit,
+                    timeout,
+                    cancel_event,
                 )
 
                 # Convert GrandCypher results to expected format
@@ -569,12 +588,14 @@ def query_motifs(
         else:
             # Default to DotMotif for backward compatibility
             motif = Motif(motif_query_request.query)
-            results = run_with_limits(
+            results = await asyncio.to_thread(
+                run_with_limits,
                 provider.get_motifs,
-                args=(uri, motif_query_request.query),
-                kwargs={"aggregation_type": motif_query_request.aggregation_type},
-                max_ram_bytes=ram_limit,
-                timeout_seconds=timeout,
+                (uri, motif_query_request.query),
+                {"aggregation_type": motif_query_request.aggregation_type},
+                ram_limit,
+                timeout,
+                cancel_event,
             )
             count = len(results)
             return MotifQueryResponse(
@@ -590,6 +611,8 @@ def query_motifs(
                 response_duration_ms=(time.time() - tic) * 1000,
                 error=None,
             )
+    except InterruptedError:
+        raise HTTPException(status_code=499, detail="Query cancelled")
     except Exception as e:
         return MotifQueryResponse(
             query=motif_query_request.query,
@@ -604,6 +627,9 @@ def query_motifs(
             response_duration_ms=(time.time() - tic) * 1000,
             error=str(e),
         )
+    finally:
+        cancel_event.set()
+        watcher.cancel()
 
 
 __all__ = ["router"]
