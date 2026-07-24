@@ -136,6 +136,30 @@ class TemporaryGraphHostProvider(SingleFileGraphHostProvider):
 
         return temp_id
 
+    def validate_file(self, filepath: str, original_filename: str) -> None:
+        """Parse a staged upload without registering it.
+
+        Arguments:
+            filepath (str): Path to the staged upload.
+            original_filename (str): Filename used to select the parser.
+        """
+        lower_filename = original_filename.lower()
+        extension = next(
+            (suffix for suffix in self.ACCEPTED_UPLOAD_EXTENSIONS if lower_filename.endswith(suffix)),
+            None,
+        )
+        if extension == ".csv":
+            self._read_csv_edgelist(filepath)
+            return
+        if extension is None:
+            raise ValueError("Unsupported graph format")
+        temporary_path = f"{filepath}{extension}"
+        os.replace(filepath, temporary_path)
+        try:
+            super().get_networkx_graph(temporary_path)
+        finally:
+            os.replace(temporary_path, filepath)
+
     def get_networkx_graph(self, uri: str) -> nx.Graph:
         """Return a NetworkX graph from a temporary URI.
 
@@ -224,18 +248,15 @@ class TemporaryGraphHostProvider(SingleFileGraphHostProvider):
         Returns:
             bool: True if the file was successfully cleaned up.
         """
-        try:
-            with self._metadata_transaction():
-                if temp_id not in self._uploaded_files:
-                    return False
-                file_info = self._uploaded_files[temp_id]
-                if os.path.exists(file_info.filepath):
-                    os.remove(file_info.filepath)
-                del self._uploaded_files[temp_id]
-                self._save_metadata()
-            return True
-        except Exception:
-            return False
+        with self._metadata_transaction():
+            if temp_id not in self._uploaded_files:
+                return False
+            file_info = self._uploaded_files[temp_id]
+            if os.path.exists(file_info.filepath):
+                os.remove(file_info.filepath)
+            del self._uploaded_files[temp_id]
+            self._save_metadata()
+        return True
 
     def list_temporary_files(self) -> Dict[str, Dict[str, str]]:
         """List all temporary files.
