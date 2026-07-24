@@ -30,6 +30,8 @@ from ...models import (
     VertexAttributeQueryResponse,
     DownloadGraphQueryRequest,
     DownloadGraphQueryResponse,
+    GraphPropertiesQueryRequest,
+    GraphPropertiesQueryResponse,
     _GraphFormats,
 )
 from ...host_provider.host_provider.host_provider import NetworkXHostProvider
@@ -155,6 +157,29 @@ def query_graph_download(
             else b""
         ),
         error=error_msg,
+        response_time=datetime.datetime.now().isoformat(),
+        response_duration_ms=(time.time() - tic) * 1000,
+    )
+
+
+@router.post("/graph/properties")
+def query_graph_properties(
+    request: GraphPropertiesQueryRequest,
+    commons: Annotated[HostProviderRouterGlobalDep, Depends(provider_router)],
+) -> GraphPropertiesQueryResponse:
+    """Get graph counts and attribute schemas from one graph load."""
+    tic = time.time()
+    uri = commons.get_uri_from_id(request.host_id)
+    if uri is None:
+        raise HTTPException(status_code=404, detail=f"No host found with ID {request.host_id}")
+    provider = commons.host_provider_router.provider_for(uri)
+    if provider is None:
+        raise HTTPException(status_code=404, detail=f"No provider found for host {request.host_id}")
+
+    properties = _run_graph_operation(commons, provider.get_graph_properties, uri)
+    return GraphPropertiesQueryResponse(
+        **properties,
+        host_id=request.host_id,
         response_time=datetime.datetime.now().isoformat(),
         response_duration_ms=(time.time() - tic) * 1000,
     )

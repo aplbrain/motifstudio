@@ -138,6 +138,32 @@ class NetworkXHostProvider(HostProvider):
         except Exception as e:
             return None, str(e)
 
+    def get_graph_properties(self, uri: str) -> dict:
+        """Return counts and attribute schemas from one graph load."""
+        graph = self.get_networkx_graph(uri)
+        vertex_attributes = {}
+        for _, attributes in graph.nodes(data=True):
+            for name, value in attributes.items():
+                value_type = type(value).__name__
+                if name in vertex_attributes and vertex_attributes[name] != value_type:
+                    value_type = "str"
+                vertex_attributes[name] = value_type
+
+        edge_attributes = {}
+        for _, _, attributes in graph.edges(data=True):
+            for name, value in attributes.items():
+                value_type = type(value).__name__
+                if name in edge_attributes and edge_attributes[name] != value_type:
+                    value_type = "str"
+                edge_attributes[name] = value_type
+
+        return {
+            "vertex_count": graph.number_of_nodes(),
+            "edge_count": graph.number_of_edges(),
+            "vertex_attributes": vertex_attributes,
+            "edge_attributes": edge_attributes,
+        }
+
     def get_vertex_count(self, uri: str) -> int:
         """Return the number of vertices in the graph.
 

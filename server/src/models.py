@@ -111,6 +111,21 @@ class EdgeAttributeQueryResponse(_QueryResponseBase):
     attributes: AttributeSchema
 
 
+class GraphPropertiesQueryRequest(_QueryRequestBase):
+    """A request for graph counts and attribute schemas."""
+
+    ...
+
+
+class GraphPropertiesQueryResponse(_QueryResponseBase):
+    """Counts and attribute schemas computed from one graph load."""
+
+    vertex_count: int
+    edge_count: int
+    vertex_attributes: AttributeSchema
+    edge_attributes: AttributeSchema
+
+
 class MotifParseQueryRequest(_QueryRequestBase):
     """A request to parse a motif query."""
 
