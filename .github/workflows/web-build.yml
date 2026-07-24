@@ -24,7 +24,15 @@ jobs:
     # Change directory to motifstudio-web
 
     - name: Install dependencies
-      run: npm install
+      run: npm ci
+      working-directory: motifstudio-web
+
+    - name: Lint application
+      run: npm run lint
+      working-directory: motifstudio-web
+
+    - name: Type-check application
+      run: npm run typecheck
       working-directory: motifstudio-web
 
     - name: Build Next.js application

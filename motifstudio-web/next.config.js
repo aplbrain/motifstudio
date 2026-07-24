@@ -1,10 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    // Don't fail the build when there are TypeScript errors
-    typescript: {
-        ignoreBuildErrors: true,
-    },
-
     // Build to the "build/" folder instead of the ".next/" folder
     distDir: 'build',
 

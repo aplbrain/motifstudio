@@ -96,6 +96,9 @@ export function GraphForm({
                             <div className="flow-col w-full">
                                 <Combobox
                                     onChange={(v) => {
+                                        if (!v) {
+                                            return;
+                                        }
                                         if (onGraphChange) {
                                             onGraphChange(v);
                                         }
