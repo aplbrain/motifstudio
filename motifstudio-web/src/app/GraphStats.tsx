@@ -27,45 +27,17 @@ export function GraphStats({
     const isClient = useClientOnly();
     const [downloadingFormat, setDownloadingFormat] = useState<string | null>(null);
 
-    // Fetch graph statistics and attributes.
-    // TODO: Perhaps these should all go in one combined query?
     const {
-        data: vertData,
-        error: vertError,
-        isLoading: vertIsLoading,
-    } = useSWR<{ vertex_count: number }>([`${BASE_URL}/queries/vertices/count`, graph?.id], () =>
-        bodiedFetcher(`${BASE_URL}/queries/vertices/count`, {
-            host_id: graph?.id,
-        })
-    );
-    const {
-        data: edgeData,
-        error: edgeError,
-        isLoading: edgeIsLoading,
-    } = useSWR<{ edge_count: number }>([`${BASE_URL}/queries/edges/count`, graph?.id], () =>
-        bodiedFetcher(`${BASE_URL}/queries/edges/count`, {
-            host_id: graph?.id,
-        })
-    );
-    const {
-        data: vertAttrData,
-        error: vertAttrError,
-        isLoading: vertAttrIsLoading,
+        data: properties,
+        error,
+        isLoading,
     } = useSWR<{
-        attributes: { [key: string]: string };
-    }>([`${BASE_URL}/queries/vertices/attributes`, graph?.id], () =>
-        bodiedFetcher(`${BASE_URL}/queries/vertices/attributes`, {
-            host_id: graph?.id,
-        })
-    );
-    const {
-        data: edgeAttrData,
-        error: edgeAttrError,
-        isLoading: edgeAttrIsLoading,
-    } = useSWR<{
-        attributes: { [key: string]: string };
-    }>([`${BASE_URL}/queries/edges/attributes`, graph?.id], () =>
-        bodiedFetcher(`${BASE_URL}/queries/edges/attributes`, {
+        vertex_count: number;
+        edge_count: number;
+        vertex_attributes: { [key: string]: string };
+        edge_attributes: { [key: string]: string };
+    }>([`${BASE_URL}/queries/graph/properties`, graph?.id], () =>
+        bodiedFetcher(`${BASE_URL}/queries/graph/properties`, {
             host_id: graph?.id,
         })
     );
@@ -74,16 +46,16 @@ export function GraphStats({
     // provide a callback function to the parent component to share the
     // attributes when they are loaded.
     useEffect(() => {
-        if (vertAttrData?.attributes) {
-            onAttributesLoaded?.(vertAttrData.attributes);
+        if (properties?.vertex_attributes) {
+            onAttributesLoaded?.(properties.vertex_attributes);
         }
-    }, [vertAttrData?.attributes, onAttributesLoaded]);
+    }, [properties?.vertex_attributes, onAttributesLoaded]);
 
     // Use client-only check to avoid hydration mismatch
     if (!isClient) return <div>Loading...</div>;
-    if (vertIsLoading || edgeIsLoading || vertAttrIsLoading || edgeAttrIsLoading) return <div>Loading...</div>;
-    if (vertError || edgeError || vertAttrError || edgeAttrError) return <div>Error: {vertError || edgeError || vertAttrError || edgeAttrError}</div>;
-    if (!vertData || !edgeData) return <div>No data</div>;
+    if (isLoading) return <div>Loading...</div>;
+    if (error) return <div>Error: {error.message || String(error)}</div>;
+    if (!properties) return <div>No data</div>;
 
     /**
      * Download the graph in a selected format.
@@ -146,20 +118,20 @@ export function GraphStats({
                         <div className="w-1/2">
                             <b>Nodes</b>
                         </div>
-                        <div className="w-1/2">{vertData?.vertex_count}</div>
+                        <div className="w-1/2">{properties.vertex_count}</div>
                     </div>
                     <div className="flex flex-row gap-2 items-center">
                         <div className="w-1/2">
                             <b>Edges</b>
                         </div>
-                        <div className="w-1/2">{edgeData?.edge_count}</div>
+                        <div className="w-1/2">{properties.edge_count}</div>
                     </div>
                     <div className="flex flex-row gap-2 items-center">
                         <div className="w-1/2">
                             <b>Density</b>
                         </div>
                         <div className="w-1/2">
-                            {((edgeData?.edge_count || 0) / Math.pow(vertData?.vertex_count || 0, 2)).toFixed(6)}
+                            {(properties.edge_count / Math.pow(properties.vertex_count, 2)).toFixed(6)}
                         </div>
                     </div>
                 </div>
@@ -169,8 +141,8 @@ export function GraphStats({
                 {/* Vertex attributes list */}
                 <h3 className="text-lg font-mono w-full">Vertex Attributes</h3>
                 <div className="flex flex-wrap gap-2">
-                    {vertAttrData?.attributes
-                        ? Object.entries(vertAttrData?.attributes).map(([key, value]) => (
+                    {properties.vertex_attributes
+                        ? Object.entries(properties.vertex_attributes).map(([key, value]) => (
                             <span
                                 key={key}
                                 className="px-2 py-1 bg-blue-50 rounded-md shadow-sm text-sm font-medium text-blue-800"
@@ -186,8 +158,8 @@ export function GraphStats({
                 {/* Edge attributes list */}
                 <h3 className="text-lg font-mono w-full">Edge Attributes</h3>
                 <div className="flex flex-wrap gap-2">
-                    {edgeAttrData?.attributes
-                        ? Object.entries(edgeAttrData?.attributes).map(([key, value]) => (
+                    {properties.edge_attributes
+                        ? Object.entries(properties.edge_attributes).map(([key, value]) => (
                             <span
                                 key={key}
                                 className="px-2 py-1 bg-green-50 rounded-md shadow-sm text-sm font-medium text-green-800"

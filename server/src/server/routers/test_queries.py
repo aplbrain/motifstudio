@@ -5,6 +5,7 @@ from fastapi import HTTPException
 
 from ...models import DownloadGraphQueryRequest
 from .queries import _run_graph_operation, _serialize_graph
+from ...host_provider.host_provider.host_provider import NetworkXHostProvider
 
 
 def _commons():
@@ -57,3 +58,23 @@ def test_serialize_graph_writes_a_temporary_file():
 
 def test_graph_download_defaults_to_graphml():
     assert DownloadGraphQueryRequest(host_id="graph").format == "graphml"
+
+
+def test_graph_properties_loads_graph_once():
+    import networkx as nx
+
+    provider = NetworkXHostProvider()
+    graph = nx.Graph()
+    graph.add_edge("a", "b", weight=1)
+    graph.nodes["a"]["kind"] = "source"
+    provider.get_networkx_graph = Mock(return_value=graph)
+
+    properties = provider.get_graph_properties("graph")
+
+    provider.get_networkx_graph.assert_called_once_with("graph")
+    assert properties == {
+        "vertex_count": 2,
+        "edge_count": 1,
+        "vertex_attributes": {"kind": "str"},
+        "edge_attributes": {"weight": "int"},
+    }
