@@ -56,4 +56,10 @@ class SingleFileGraphHostProvider(NetworkXHostProvider):
             nx.Graph: The NetworkX graph.
 
         """
-        return ACCEPTED_EXTENSIONS[uri.split(".")[-1]](uri)
+        extension = next(
+            (candidate for candidate in sorted(ACCEPTED_EXTENSIONS, key=len, reverse=True) if uri.endswith(candidate)),
+            None,
+        )
+        if extension is None:
+            raise ValueError(f"Unsupported graph file: {uri}")
+        return ACCEPTED_EXTENSIONS[extension](uri)

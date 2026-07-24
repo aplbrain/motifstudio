@@ -37,3 +37,14 @@ def test_display_name_survives_provider_restart(tmp_path):
     restarted = TemporaryGraphHostProvider(str(tmp_path))
 
     assert restarted.get_file_info(temp_id)["display_name"] == "My graph"
+
+
+def test_csv_attributes_are_preserved(tmp_path):
+    provider = TemporaryGraphHostProvider(str(tmp_path))
+    path = tmp_path / "attributes.csv"
+    path.write_text("source,target,weight,label\na,b,2,edge\n")
+
+    graph = provider._read_csv_edgelist(str(path))
+
+    assert graph.edges["a", "b"]["weight"] == 2
+    assert graph.edges["a", "b"]["label"] == "edge"
