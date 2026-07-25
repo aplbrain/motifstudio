@@ -1,9 +1,11 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 import { HostListing, bodiedFetcher, BASE_URL, neuroglancerUrlFromHostVolumetricData } from "./api";
 import { useDebounce } from "./useDebounce";
 import { LoadingSpinner } from "./LoadingSpinner";
+
+const RESULTS_PER_PAGE = 100;
 
 export function ResultsFetcher({
     graph,
@@ -18,10 +20,15 @@ export function ResultsFetcher({
 }) {
     const debouncedQuery = useDebounce(query, 500);
     const controller = useRef<AbortController | null>(null);
+    const [page, setPage] = useState(0);
 
     useEffect(() => {
         return () => controller.current?.abort();
     }, []);
+
+    useEffect(() => {
+        setPage(0);
+    }, [graph?.id, debouncedQuery, queryType, limit]);
 
     const {
         data: queryData,
@@ -78,6 +85,10 @@ export function ResultsFetcher({
     }
 
     const motifCountString = queryData?.motif_count?.toLocaleString();
+    const motifResults = queryData?.motif_results || [];
+    const pageCount = Math.max(1, Math.ceil(motifResults.length / RESULTS_PER_PAGE));
+    const pageStart = page * RESULTS_PER_PAGE;
+    const pageResults = motifResults.slice(pageStart, pageStart + RESULTS_PER_PAGE);
 
     /**
      * Download the results in the requested format.
@@ -89,16 +100,15 @@ export function ResultsFetcher({
      *    "json", "csv".
      * @returns {void}
      */
-    function downloadResults(format: string): void {
+    function downloadResults(format: "json" | "csv"): void {
+        let blob: Blob;
+        let filename: string;
+
         if (format === "json") {
-            const blob = new Blob([JSON.stringify(queryData)], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = "motif_results.json";
-            a.click();
-        } else if (format === "csv") {
-            const csv = queryData.motif_results.map((result: any) => {
+            blob = new Blob([JSON.stringify(queryData)], { type: "application/json" });
+            filename = "motif_results.json";
+        } else {
+            const csv = motifResults.map((result: any) => {
                 return queryData.motif_entities
                     .map((entity: string) => {
                         let value = result[entity].id;
@@ -122,15 +132,16 @@ export function ResultsFetcher({
                     })
                     .join(",");
             });
-            const blob = new Blob([csv.join("\n")], { type: "text/csv" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = "motif_results.csv";
-            a.click();
-        } else {
-            console.error(`Unknown requested download format: ${format}`);
+            blob = new Blob([csv.join("\n")], { type: "text/csv" });
+            filename = "motif_results.csv";
         }
+
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        link.click();
+        URL.revokeObjectURL(url);
     }
 
     return (
@@ -178,12 +189,14 @@ export function ResultsFetcher({
                 </div>
                 <div className="w-full flex gap-2">
                     <button
+                        type="button"
                         className="bg-blue-500 hover:bg-blue-700 text-white font-bold px-4 rounded"
                         onClick={() => downloadResults("json")}
                     >
                         JSON
                     </button>
                     <button
+                        type="button"
                         className="bg-blue-500 hover:bg-blue-700 text-white font-bold px-4 rounded"
                         onClick={() => downloadResults("csv")}
                     >
@@ -191,51 +204,53 @@ export function ResultsFetcher({
                     </button>
                 </div>
             </div>
-            <div className="flex flex-col gap-2 max-h-64 overflow-y-scroll">
-                <table className="table-auto">
-                    <thead className="border-b-2">
-                        <tr className="border-b-2">
-                            <th></th>
-                            {queryData?.motif_entities ? (
-                                queryData.motif_entities.map((entity: string, i: number) => (
-                                    <th className="truncate text-left" key={i}>
+            <div className="flex flex-col gap-2">
+                <div className="max-h-64 overflow-auto">
+                    <table className="table-auto w-full">
+                        <caption className="sr-only">Motif query results</caption>
+                        <thead className="border-b-2">
+                            <tr className="border-b-2">
+                                <th scope="col" className="text-left">
+                                    Visualization
+                                </th>
+                                {(queryData?.motif_entities || []).map((entity: string) => (
+                                    <th scope="col" className="truncate text-left" key={entity}>
                                         {entity}
                                     </th>
-                                ))
-                            ) : (
-                                <div></div>
-                            )}
-                        </tr>
-                    </thead>
-                    <tbody className="border-b-2">
-                        {queryData?.motif_results?.length ? (
-                            queryData.motif_results.slice(0, 10000).map((result: any, i: number) => (
-                                <tr key={i} className="border-b-2 hover:bg-gray-100 dark:hover:bg-gray-700">
-                                    <a
-                                        href={neuroglancerUrlFromHostVolumetricData(
-                                            queryData?.host_volumetric_data?.uri,
-                                            queryData?.host_volumetric_data?.other_channels || [],
-                                            Object.values(result).map((v: any) => {
-                                                const id = v?.__segmentation_id__ || v.id;
-                                                // For JSON-serialized values, try to parse them
-                                                if (typeof id === "string") {
-                                                    try {
-                                                        const parsed = JSON.parse(id);
-                                                        return parsed;
-                                                    } catch {
-                                                        return id;
-                                                    }
-                                                }
-                                                return id;
-                                            })
-                                        )}
-                                        target="_blank"
-                                        rel="noreferrer"
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody className="border-b-2">
+                            {pageResults.length ? (
+                                pageResults.map((result: any, i: number) => (
+                                    <tr
+                                        key={pageStart + i}
+                                        className="border-b-2 hover:bg-gray-100 dark:hover:bg-gray-700"
                                     >
-                                        <b>View</b>
-                                    </a>
-                                    {queryData?.motif_entities ? (
-                                        queryData.motif_entities.map((entity: string, j: number) => {
+                                        <td>
+                                            <a
+                                                href={neuroglancerUrlFromHostVolumetricData(
+                                                    queryData?.host_volumetric_data?.uri,
+                                                    queryData?.host_volumetric_data?.other_channels || [],
+                                                    Object.values(result).map((v: any) => {
+                                                        const id = v?.__segmentation_id__ || v.id;
+                                                        if (typeof id === "string") {
+                                                            try {
+                                                                return JSON.parse(id);
+                                                            } catch {
+                                                                return id;
+                                                            }
+                                                        }
+                                                        return id;
+                                                    })
+                                                )}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                            >
+                                                <b>View</b>
+                                            </a>
+                                        </td>
+                                        {(queryData?.motif_entities || []).map((entity: string) => {
                                             let displayValue = result[entity].id;
                                             let titleValue = result[entity].id;
 
@@ -261,27 +276,50 @@ export function ResultsFetcher({
                                             }
 
                                             return (
-                                                <td key={j} className="truncate max-w-xs" title={titleValue}>
+                                                <td key={entity} className="truncate max-w-xs" title={titleValue}>
                                                     {displayValue}
                                                 </td>
                                             );
-                                        })
-                                    ) : (
-                                        <div></div>
-                                    )}
+                                        })}
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td
+                                        colSpan={(queryData?.motif_entities?.length || 0) + 1}
+                                        className="py-4 text-center"
+                                    >
+                                        No results
+                                    </td>
                                 </tr>
-                            ))
-                        ) : (
-                            <div>
-                                {queryData?.error ? (
-                                    <div className="text-red-500">{errorText.toString()}</div>
-                                ) : (
-                                    <div>No results</div>
-                                )}
-                            </div>
-                        )}
-                    </tbody>
-                </table>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+                {pageCount > 1 && (
+                    <nav className="flex items-center justify-between gap-4" aria-label="Result pages">
+                        <button
+                            type="button"
+                            className="rounded bg-blue-500 px-3 py-1 font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                            disabled={page === 0}
+                            onClick={() => setPage((current) => current - 1)}
+                        >
+                            Previous
+                        </button>
+                        <span aria-live="polite">
+                            Page {page + 1} of {pageCount} ({pageStart + 1}-
+                            {Math.min(pageStart + RESULTS_PER_PAGE, motifResults.length)} of {motifResults.length})
+                        </span>
+                        <button
+                            type="button"
+                            className="rounded bg-blue-500 px-3 py-1 font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                            disabled={page === pageCount - 1}
+                            onClick={() => setPage((current) => current + 1)}
+                        >
+                            Next
+                        </button>
+                    </nav>
+                )}
             </div>
         </>
     );

@@ -204,33 +204,34 @@ export function GraphUpload({ onGraphUploaded }: GraphUploadProps) {
                         {uploadedGraphs.map((graph) => (
                             <div
                                 key={graph.temp_id}
-                                className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors"
-                                onClick={() => {
-                                    if (onGraphUploaded) {
-                                        const hostListing: HostListing = {
-                                            id: graph.temp_id,
-                                            name: graph.name,
-                                            uri: `temp://${graph.temp_id}`,
-                                            provider: { "@id": "TemporaryGraphHostProvider" },
-                                            volumetric_data: {},
-                                        };
-                                        onGraphUploaded(hostListing);
-                                    }
-                                }}
+                                className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                             >
-                                <div className="flex-1">
+                                <button
+                                    type="button"
+                                    className="flex-1 p-3 text-left rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                                    onClick={() => {
+                                        if (onGraphUploaded) {
+                                            const hostListing: HostListing = {
+                                                id: graph.temp_id,
+                                                name: graph.name,
+                                                uri: `temp://${graph.temp_id}`,
+                                                provider: { "@id": "TemporaryGraphHostProvider" },
+                                                volumetric_data: {},
+                                            };
+                                            onGraphUploaded(hostListing);
+                                        }
+                                    }}
+                                >
                                     <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{graph.name}</p>
                                     <p className="text-xs text-gray-500 dark:text-gray-400">
                                         {formatFileSize(graph.file_size)} • {graph.original_filename}
                                     </p>
-                                </div>
+                                </button>
                                 <button
-                                    onClick={(e) => {
-                                        e.stopPropagation(); // Prevent triggering the row click
-                                        removeUploadedGraph(graph.temp_id);
-                                    }}
-                                    className="ml-4 text-gray-400 hover:text-red-600 transition-colors"
-                                    title="Remove uploaded graph"
+                                    type="button"
+                                    onClick={() => removeUploadedGraph(graph.temp_id)}
+                                    className="m-3 text-gray-400 hover:text-red-600 transition-colors"
+                                    aria-label={`Remove ${graph.name}`}
                                 >
                                     <XMarkIcon className="h-4 w-4" />
                                 </button>
