@@ -1,8 +1,7 @@
-// Base URL based on dev status:
-export const BASE_URL =
-    process.env.NODE_ENV === "development" ? "http://localhost:8000" : "https://api.motifstudio.bossdb.org";
-
-// export const BASE_URL = "https://api.motifstudio.bossdb.org";
+export const BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.motifstudio.bossdb.org").replace(
+    /\/$/,
+    ""
+);
 
 export const neuroglancerUrlFromHostVolumetricData = (
     segmentationUri: string,
