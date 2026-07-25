@@ -113,9 +113,11 @@ class HostProvider(Protocol):
             uri (str): The URI of the host.
             motif_string (str): The motif to query.
             aggregation_type (str): The aggregation to use.
+            limit (int): The maximum number of result rows to return.
 
         Returns:
-            PossibleMotifResultTypes: The results, optionally aggregated.
+            tuple[int, PossibleMotifResultTypes]: The total match count and the
+                results, optionally limited or aggregated.
 
         """
         ...
@@ -276,9 +278,11 @@ class NetworkXHostProvider(HostProvider):
             uri (str): The URI of the host.
             motif_string (str): The motif to query.
             aggregation_type (str): The aggregation to use.
+            limit (int): The maximum number of result rows to return.
 
         Returns:
-            PossibleMotifResultTypes: The results, optionally aggregated.
+            tuple[int, PossibleMotifResultTypes]: The total match count and the
+                results, optionally limited or aggregated.
 
         """
         # Try to parse the motif string, and raise a ValueError if it's invalid
