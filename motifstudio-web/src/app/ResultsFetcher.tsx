@@ -9,10 +9,12 @@ export function ResultsFetcher({
     graph,
     query,
     queryType,
+    limit,
 }: {
     graph: HostListing | null;
     query: string;
     queryType: "dotmotif" | "cypher";
+    limit?: number;
 }) {
     const debouncedQuery = useDebounce(query, 500);
     const [controller] = useState(() => new AbortController());
@@ -25,13 +27,14 @@ export function ResultsFetcher({
         data: queryData,
         error: queryError,
         isLoading: queryIsLoading,
-    } = useSWR([`${BASE_URL}/queries/motifs`, graph?.id, debouncedQuery, queryType], () =>
+    } = useSWR([`${BASE_URL}/queries/motifs`, graph?.id, debouncedQuery, queryType, limit], () =>
         bodiedFetcher(
             `${BASE_URL}/queries/motifs`,
             {
                 host_id: graph?.id,
                 query: debouncedQuery,
                 query_type: queryType,
+                limit,
             },
             { signal: controller.signal }
         )
@@ -71,10 +74,7 @@ export function ResultsFetcher({
         return <div className="text-red-500 p-4">{errorText}</div>;
     }
 
-    let motifCountString = "";
-    if (queryData?.motif_count) {
-        motifCountString = queryData.motif_count.toLocaleString();
-    }
+    const motifCountString = queryData?.motif_count?.toLocaleString();
 
     /**
      * Download the results in the requested format.
@@ -138,7 +138,7 @@ export function ResultsFetcher({
                 <div className="w-full">
                     <b>Result Count</b>
                 </div>
-                <div className="w-full">{motifCountString || "Error"}</div>
+                <div className="w-full">{motifCountString ?? "Error"}</div>
             </div>
             <div className="flex flex-row gap-2 items-center">
                 <div className="w-full">

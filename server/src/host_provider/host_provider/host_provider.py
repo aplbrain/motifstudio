@@ -97,7 +97,13 @@ class HostProvider(Protocol):
         """
         ...
 
-    def get_motifs(self, uri: str, motif_string: str, aggregation_type: str | None = None) -> PossibleMotifResultTypes:
+    def get_motifs(
+        self,
+        uri: str,
+        motif_string: str,
+        aggregation_type: str | None = None,
+        limit: int | None = None,
+    ) -> tuple[int, PossibleMotifResultTypes]:
         """Get the motifs in the graph.
 
         Optionally, transform the results using an aggregation from the
@@ -107,9 +113,11 @@ class HostProvider(Protocol):
             uri (str): The URI of the host.
             motif_string (str): The motif to query.
             aggregation_type (str): The aggregation to use.
+            limit (int): The maximum number of result rows to return.
 
         Returns:
-            PossibleMotifResultTypes: The results, optionally aggregated.
+            tuple[int, PossibleMotifResultTypes]: The total match count and the
+                results, optionally limited or aggregated.
 
         """
         ...
@@ -254,7 +262,13 @@ class NetworkXHostProvider(HostProvider):
         executor = GrandIsoExecutor(graph=graph)
         return executor.count(motif)
 
-    def get_motifs(self, uri: str, motif_string: str, aggregation_type: str | None = None) -> PossibleMotifResultTypes:
+    def get_motifs(
+        self,
+        uri: str,
+        motif_string: str,
+        aggregation_type: str | None = None,
+        limit: int | None = None,
+    ) -> tuple[int, PossibleMotifResultTypes]:
         """Return the motifs in the graph.
 
         Optionally, transform the results using an aggregation from the
@@ -264,9 +278,11 @@ class NetworkXHostProvider(HostProvider):
             uri (str): The URI of the host.
             motif_string (str): The motif to query.
             aggregation_type (str): The aggregation to use.
+            limit (int): The maximum number of result rows to return.
 
         Returns:
-            PossibleMotifResultTypes: The results, optionally aggregated.
+            tuple[int, PossibleMotifResultTypes]: The total match count and the
+                results, optionally limited or aggregated.
 
         """
         # Try to parse the motif string, and raise a ValueError if it's invalid
@@ -294,7 +310,8 @@ class NetworkXHostProvider(HostProvider):
         # The only "special" argument is limit. If we decide to have other
         # pre-processing arguments in the future, we will likely want to handle
         # them more explicitly.
-        results = executor.find(motif, limit=parsed_agg_args.get("limit", None))
+        results = list(executor.find(motif))
+        count = len(results)
         try:
             results = [
                 {k: {
@@ -306,7 +323,10 @@ class NetworkXHostProvider(HostProvider):
             ]
         except AttributeError:
             print(f"Could not enrich motif result dict for host {uri}")
-        return aggregator(**parsed_agg_args).aggregate(results)
+        results = aggregator(**parsed_agg_args).aggregate(results)
+        if limit is not None and isinstance(results, list):
+            results = results[:limit]
+        return count, results
 
 
 __all__ = [

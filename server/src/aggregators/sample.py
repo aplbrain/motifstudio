@@ -29,7 +29,7 @@ class MotifResultsSampleAggregator(MotifResultsAggregator):
                 results.
 
         """
-        return random.sample(results, self._limit)
+        return random.sample(results, min(self._limit, len(results)))
 
 
 __all__ = ["MotifResultsSampleAggregator"]

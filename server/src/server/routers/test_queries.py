@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 import pytest
 from fastapi import HTTPException
 
-from ...models import DownloadGraphQueryRequest
+from ...models import DownloadGraphQueryRequest, MotifQueryRequest
 from .queries import _run_graph_operation, _serialize_graph
 from ...host_provider.host_provider.host_provider import NetworkXHostProvider
 
@@ -78,3 +78,33 @@ def test_graph_properties_loads_graph_once():
         "vertex_attributes": {"kind": "str"},
         "edge_attributes": {"weight": "int"},
     }
+
+
+def test_motif_query_limit_is_bounded():
+    assert MotifQueryRequest(host_id="graph", query="A", limit=10).limit == 10
+    with pytest.raises(ValueError):
+        MotifQueryRequest(host_id="graph", query="A", limit=10001)
+
+
+def test_motif_limit_preserves_total_count():
+    import networkx as nx
+
+    provider = NetworkXHostProvider()
+    provider.get_networkx_graph = Mock(return_value=nx.path_graph(4))
+
+    count, results = provider.get_motifs("graph", "A -- B", limit=2)
+
+    assert count == 6
+    assert len(results) == 2
+
+
+def test_motif_aggregation_preserves_match_count():
+    import networkx as nx
+
+    provider = NetworkXHostProvider()
+    provider.get_networkx_graph = Mock(return_value=nx.path_graph(4))
+
+    count, results = provider.get_motifs("graph", "A -- B", aggregation_type="sample | {\"limit\": 2}")
+
+    assert count == 6
+    assert len(results) == 2

@@ -568,6 +568,8 @@ async def query_motifs(
                             formatted_results.append(result_row)
 
                 count = len(formatted_results)
+                if motif_query_request.limit is not None:
+                    formatted_results = formatted_results[:motif_query_request.limit]
 
                 return MotifQueryResponse(
                     query=motif_query_request.query,
@@ -588,16 +590,18 @@ async def query_motifs(
         else:
             # Default to DotMotif for backward compatibility
             motif = Motif(motif_query_request.query)
-            results = await asyncio.to_thread(
+            count, results = await asyncio.to_thread(
                 run_with_limits,
                 provider.get_motifs,
                 (uri, motif_query_request.query),
-                {"aggregation_type": motif_query_request.aggregation_type},
+                {
+                    "aggregation_type": motif_query_request.aggregation_type,
+                    "limit": motif_query_request.limit,
+                },
                 ram_limit,
                 timeout,
                 cancel_event,
             )
-            count = len(results)
             return MotifQueryResponse(
                 query=motif_query_request.query,
                 query_type=motif_query_request.query_type,
