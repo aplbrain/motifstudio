@@ -4,7 +4,10 @@ version: '3.8'
 services:
   motifstudio-web:
     # Lives at ./motifstudio-web/Dockerfile
-    build: ./motifstudio-web
+    build:
+      context: ./motifstudio-web
+      args:
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:7082
     ports:
       - "7080:80"
   motifstudio-server:
@@ -12,6 +15,5 @@ services:
     build: ./server
     ports:
       - "7082:8000"
-
 
 

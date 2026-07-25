@@ -5,6 +5,9 @@
 # Build environment
 FROM node:22-alpine as build
 
+ARG NEXT_PUBLIC_API_BASE_URL=https://api.motifstudio.bossdb.org
+ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
+
 # Set working directory
 WORKDIR /app
 
@@ -12,7 +15,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm install
+RUN npm ci
 
 # Copy source code
 COPY . .
