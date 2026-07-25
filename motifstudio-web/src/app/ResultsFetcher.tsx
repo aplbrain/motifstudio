@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import useSWR from "swr";
 import { HostListing, bodiedFetcher, BASE_URL, neuroglancerUrlFromHostVolumetricData } from "./api";
 import { useDebounce } from "./useDebounce";
@@ -17,18 +17,21 @@ export function ResultsFetcher({
     limit?: number;
 }) {
     const debouncedQuery = useDebounce(query, 500);
-    const [controller] = useState(() => new AbortController());
+    const controller = useRef<AbortController | null>(null);
 
     useEffect(() => {
-        return () => controller.abort();
-    }, [controller]);
+        return () => controller.current?.abort();
+    }, []);
 
     const {
         data: queryData,
         error: queryError,
         isLoading: queryIsLoading,
-    } = useSWR([`${BASE_URL}/queries/motifs`, graph?.id, debouncedQuery, queryType, limit], () =>
-        bodiedFetcher(
+    } = useSWR([`${BASE_URL}/queries/motifs`, graph?.id, debouncedQuery, queryType, limit], async () => {
+        controller.current?.abort();
+        const requestController = new AbortController();
+        controller.current = requestController;
+        return bodiedFetcher(
             `${BASE_URL}/queries/motifs`,
             {
                 host_id: graph?.id,
@@ -36,9 +39,9 @@ export function ResultsFetcher({
                 query_type: queryType,
                 limit,
             },
-            { signal: controller.signal }
-        )
-    );
+            { signal: requestController.signal }
+        );
+    });
 
     if (queryIsLoading) return <LoadingSpinner />;
 
