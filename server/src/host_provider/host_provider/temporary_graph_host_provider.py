@@ -260,6 +260,7 @@ class TemporaryGraphHostProvider(SingleFileGraphHostProvider):
             if time.time() > file_info.expires_at:
                 continue
             result[temp_id] = {
+                "temp_id": temp_id,
                 "original_filename": file_info.original_filename,
                 "display_name": file_info.display_name,
                 "filepath": file_info.filepath,

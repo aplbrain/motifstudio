@@ -48,3 +48,10 @@ def test_csv_attributes_are_preserved(tmp_path):
 
     assert graph.edges["a", "b"]["weight"] == 2
     assert graph.edges["a", "b"]["label"] == "edge"
+
+
+def test_list_metadata_includes_temporary_id(tmp_path):
+    provider = TemporaryGraphHostProvider(str(tmp_path))
+    temp_id = provider.store_file(_stage_file(tmp_path, "graph.csv"), "graph.csv")
+
+    assert provider.list_temporary_files()[temp_id]["temp_id"] == temp_id

@@ -200,6 +200,12 @@ class MotifQueryRequest(BaseModel):
         None,
         description="The type of aggregation to perform on the results",
     )
+    limit: int | None = Field(
+        None,
+        ge=1,
+        le=10000,
+        description="Maximum number of result rows to return",
+    )
 
 
 class MotifQueryResponse(_QueryResponseBase):

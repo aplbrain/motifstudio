@@ -131,7 +131,9 @@ export function GraphStats({
                             <b>Density</b>
                         </div>
                         <div className="w-1/2">
-                            {(properties.edge_count / Math.pow(properties.vertex_count, 2)).toFixed(6)}
+                            {properties.vertex_count === 0
+                                ? "0.000000"
+                                : (properties.edge_count / Math.pow(properties.vertex_count, 2)).toFixed(6)}
                         </div>
                     </div>
                 </div>
