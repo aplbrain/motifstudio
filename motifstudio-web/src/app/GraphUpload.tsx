@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { CloudArrowUpIcon, XMarkIcon, CheckCircleIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { BASE_URL, HostListing } from "./api";
 
@@ -20,6 +20,24 @@ export function GraphUpload({ onGraphUploaded }: GraphUploadProps) {
     const [uploadProgress, setUploadProgress] = useState<string>("");
     const [uploadedGraphs, setUploadedGraphs] = useState<UploadedGraph[]>([]);
     const [error, setError] = useState<string>("");
+    const successTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    useEffect(() => {
+        const storedGraphs = localStorage.getItem("motifstudio_uploaded_graphs");
+        if (storedGraphs) {
+            try {
+                setUploadedGraphs(JSON.parse(storedGraphs));
+            } catch (err) {
+                console.error("Failed to parse stored graphs:", err);
+                localStorage.removeItem("motifstudio_uploaded_graphs");
+            }
+        }
+        return () => {
+            if (successTimer.current) {
+                clearTimeout(successTimer.current);
+            }
+        };
+    }, []);
 
     const handleDragOver = useCallback((e: React.DragEvent) => {
         e.preventDefault();
@@ -83,7 +101,10 @@ export function GraphUpload({ onGraphUploaded }: GraphUploadProps) {
                 const updated = [...existing, uploadedGraph];
                 localStorage.setItem("motifstudio_uploaded_graphs", JSON.stringify(updated));
 
-                setTimeout(() => setUploadProgress(""), 3000);
+                if (successTimer.current) {
+                    clearTimeout(successTimer.current);
+                }
+                successTimer.current = setTimeout(() => setUploadProgress(""), 3000);
             } else {
                 setError(result.error || "Upload failed");
             }
@@ -118,20 +139,6 @@ export function GraphUpload({ onGraphUploaded }: GraphUploadProps) {
             method: "DELETE",
         }).catch(console.error);
     };
-
-    // Load uploaded graphs from localStorage on component mount
-    useState(() => {
-        const storedGraphs = localStorage.getItem("motifstudio_uploaded_graphs");
-        if (storedGraphs) {
-            try {
-                const parsed = JSON.parse(storedGraphs);
-                setUploadedGraphs(parsed);
-            } catch (err) {
-                console.error("Failed to parse stored graphs:", err);
-                localStorage.removeItem("motifstudio_uploaded_graphs");
-            }
-        }
-    });
 
     return (
         <div className="space-y-4">

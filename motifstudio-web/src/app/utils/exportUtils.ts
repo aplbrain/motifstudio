@@ -1,8 +1,14 @@
 import { HostListing } from "../api";
 
-export function exportAsJSON(queryText: string, currentGraph?: HostListing, includeGraph: boolean = true) {
+export function exportAsJSON(
+    queryText: string,
+    queryType: "dotmotif" | "cypher",
+    currentGraph?: HostListing,
+    includeGraph: boolean = true
+) {
     const exportData = {
         queryText,
+        queryType,
         graph: includeGraph ? currentGraph : undefined,
         exportedAt: new Date().toISOString(),
     };

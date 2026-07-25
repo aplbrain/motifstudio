@@ -4,6 +4,7 @@ export interface SavedProject {
     id: string;
     name: string;
     queryText: string;
+    queryType: "dotmotif" | "cypher";
     graph?: HostListing;
     timestamp: string;
 }
@@ -11,7 +12,8 @@ export interface SavedProject {
 export interface FileMenuProps {
     queryText: string;
     currentGraph?: HostListing;
-    onLoad: (data: { queryText: string; graph?: HostListing }) => void;
+    queryType: "dotmotif" | "cypher";
+    onLoad: (data: { queryText: string; graph?: HostListing; queryType?: "dotmotif" | "cypher" }) => void;
 }
 
 export interface SaveDialogProps {
@@ -19,6 +21,7 @@ export interface SaveDialogProps {
     onClose: () => void;
     queryText: string;
     currentGraph?: HostListing;
+    queryType: "dotmotif" | "cypher";
     savedProjects: SavedProject[];
     onSave: (project: SavedProject) => void;
 }

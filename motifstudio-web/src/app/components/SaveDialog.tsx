@@ -5,7 +5,7 @@ import { Dialog } from "@headlessui/react";
 import { DocumentIcon } from "@heroicons/react/24/outline";
 import { SaveDialogProps, SavedProject } from "../types/fileMenu";
 
-export function SaveDialog({ isOpen, onClose, queryText, currentGraph, savedProjects, onSave }: SaveDialogProps) {
+export function SaveDialog({ isOpen, onClose, queryText, queryType, currentGraph, savedProjects, onSave }: SaveDialogProps) {
     const [saveName, setSaveName] = useState("");
     const [includeGraph, setIncludeGraph] = useState(true);
 
@@ -16,6 +16,7 @@ export function SaveDialog({ isOpen, onClose, queryText, currentGraph, savedProj
             id: "", // Will be set by the hook
             name: saveName.trim(),
             queryText,
+            queryType,
             graph: includeGraph ? currentGraph : undefined,
             timestamp: "", // Will be set by the hook
         };

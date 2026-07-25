@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Appbar } from "./Appbar";
 import { GraphForm } from "./GraphForm";
@@ -10,6 +10,7 @@ import { GraphStats } from "./GraphStats";
 import { ResultsWrapper } from "./ResultsWrapper";
 import { getQueryParams, updateQueryParams } from "./queryparams";
 import { MotifVisualizer } from "./MotifVisualizer";
+import { useDebounce } from "./useDebounce";
 
 /**
  * The main page of the application.
@@ -34,10 +35,17 @@ export default function Home() {
             : undefined
     );
     const [queryText, setQueryText] = useState(motif || "");
+    const debouncedQueryText = useDebounce(queryText, 500);
     const [queryType, setQueryType] = useState<"dotmotif" | "cypher">(
         (query_type as "dotmotif" | "cypher") || "dotmotif"
     );
     const [entities, setEntities] = useState<{ [key: string]: string }>({});
+
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            updateQueryParams({ motif: debouncedQueryText });
+        }
+    }, [debouncedQueryText]);
 
     function setSelectedGraph(graph: HostListing) {
         setCurrentGraph(graph);
@@ -48,9 +56,6 @@ export default function Home() {
 
     function updateMotifTest(value: string) {
         setQueryText(value);
-        if (typeof window !== "undefined") {
-            updateQueryParams({ motif: value });
-        }
     }
 
     function updateQueryType(type: "dotmotif" | "cypher") {
@@ -97,6 +102,7 @@ export default function Home() {
         <main className="flex min-h-screen flex-col items-center">
             <Appbar
                 queryText={queryText}
+                queryType={queryType}
                 currentGraph={currentGraph}
                 onLoad={handleLoad}
                 onInsertPrimitive={handleInsertPrimitive}
@@ -128,13 +134,7 @@ export default function Home() {
                     <GraphForm startValue={currentGraph} onGraphChange={setSelectedGraph} />
                 </div>
                 <div className="div flex w-full flex-col py-4 gap-4">
-                    {motif && queryType === "dotmotif" ? (
-                        <MotifVisualizer
-                            motifSource={motif}
-                            // graph={currentGraph}
-                            // entities={entities}
-                        />
-                    ) : null}
+                    {queryText && queryType === "dotmotif" ? <MotifVisualizer motifSource={queryText} /> : null}
                     {currentGraph ? <GraphStats graph={currentGraph} onAttributesLoaded={setEntities} /> : null}
                     {currentGraph ? (
                         <ResultsWrapper graph={currentGraph} query={queryText} queryType={queryType} />
