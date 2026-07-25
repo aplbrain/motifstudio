@@ -1,16 +1,30 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 
 import { Appbar } from "./Appbar";
 import { GraphForm } from "./GraphForm";
-import { WrappedEditor } from "./WrappedEditor";
 import { HostListing } from "./api";
 import { GraphStats } from "./GraphStats";
 import { ResultsWrapper } from "./ResultsWrapper";
 import { getQueryParams, updateQueryParams } from "./queryparams";
-import { MotifVisualizer } from "./MotifVisualizer";
 import { useDebounce } from "./useDebounce";
+
+const WrappedEditor = dynamic(() => import("./WrappedEditor").then((module) => module.WrappedEditor), {
+    ssr: false,
+    loading: () => <div className="h-[40vh] animate-pulse bg-gray-100 dark:bg-gray-700" aria-label="Loading editor" />,
+});
+
+const MotifVisualizer = dynamic(() => import("./MotifVisualizer").then((module) => module.MotifVisualizer), {
+    ssr: false,
+    loading: () => (
+        <div
+            className="min-h-[400px] animate-pulse rounded-lg bg-gray-100 dark:bg-gray-800"
+            aria-label="Loading motif visualization"
+        />
+    ),
+});
 
 /**
  * The main page of the application.
