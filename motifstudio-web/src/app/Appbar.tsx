@@ -7,17 +7,18 @@ import { HelpMenu } from "./components/HelpMenu";
 
 interface AppbarProps {
     queryText: string;
+    queryType: "dotmotif" | "cypher";
     currentGraph?: HostListing;
     onLoad: (data: { queryText: string; graph?: HostListing }) => void;
     onInsertPrimitive: (dotmotif: string) => void;
 }
 
-export function Appbar({ queryText, currentGraph, onLoad, onInsertPrimitive }: AppbarProps) {
+export function Appbar({ queryText, queryType, currentGraph, onLoad, onInsertPrimitive }: AppbarProps) {
     return (
         <div className="w-full items-center justify-between font-mono text-sm lg:flex p-4">
             <div className="flex flex-row justify-between items-center w-full h-full p-4 bg-white rounded-lg shadow-lg dark:bg-gray-800">
                 <div className="flex items-center space-x-4">
-                    <FileMenu queryText={queryText} currentGraph={currentGraph} onLoad={onLoad} />
+                    <FileMenu queryText={queryText} queryType={queryType} currentGraph={currentGraph} onLoad={onLoad} />
                     <PrimitivesMenu onInsertPrimitive={onInsertPrimitive} />
                     <HelpMenu />
                 </div>

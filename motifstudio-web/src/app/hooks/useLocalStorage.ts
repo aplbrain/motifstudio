@@ -10,7 +10,13 @@ export function useLocalStorage() {
         // Load from localStorage on mount
         if (typeof window !== "undefined") {
             const saved = localStorage.getItem(STORAGE_KEY);
-            setSavedProjects(saved ? JSON.parse(saved) : []);
+            const projects = saved ? JSON.parse(saved) : [];
+            setSavedProjects(
+                projects.map((project: SavedProject) => ({
+                    ...project,
+                    queryType: project.queryType || "dotmotif",
+                }))
+            );
         }
     }, []);
 

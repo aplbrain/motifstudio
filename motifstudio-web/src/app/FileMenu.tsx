@@ -10,7 +10,7 @@ import { OpenDialog } from "./components/OpenDialog";
 import { DeleteConfirmDialog } from "./components/DeleteConfirmDialog";
 import { exportAsJSON } from "./utils/exportUtils";
 
-export function FileMenu({ queryText, currentGraph, onLoad }: FileMenuProps) {
+export function FileMenu({ queryText, queryType, currentGraph, onLoad }: FileMenuProps) {
     const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
     const [isOpenDialogOpen, setIsOpenDialogOpen] = useState(false);
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -26,6 +26,7 @@ export function FileMenu({ queryText, currentGraph, onLoad }: FileMenuProps) {
         onLoad({
             queryText: project.queryText,
             graph: project.graph,
+            queryType: project.queryType || "dotmotif",
         });
         setIsOpenDialogOpen(false);
     };
@@ -42,7 +43,7 @@ export function FileMenu({ queryText, currentGraph, onLoad }: FileMenuProps) {
     };
 
     const handleExport = () => {
-        exportAsJSON(queryText, currentGraph, true);
+        exportAsJSON(queryText, queryType, currentGraph, true);
     };
 
     return (
@@ -120,6 +121,7 @@ export function FileMenu({ queryText, currentGraph, onLoad }: FileMenuProps) {
                 isOpen={isSaveDialogOpen}
                 onClose={() => setIsSaveDialogOpen(false)}
                 queryText={queryText}
+                queryType={queryType}
                 currentGraph={currentGraph}
                 savedProjects={savedProjects}
                 onSave={handleSave}

@@ -17,10 +17,10 @@ export function getQueryParams(): {
     const search = window.location.search;
     const params = new URLSearchParams(search);
     return {
-        host_id: decodeURIComponent(params.get("host_id") || ""),
-        host_name: decodeURIComponent(params.get("host_name") || ""),
-        motif: decodeURIComponent(params.get("motif") || ""),
-        query_type: decodeURIComponent(params.get("query_type") || "dotmotif"),
+        host_id: params.get("host_id") || "",
+        host_name: params.get("host_name") || "",
+        motif: params.get("motif") || "",
+        query_type: params.get("query_type") || "dotmotif",
     };
 }
 
@@ -39,8 +39,12 @@ export function getQueryParams(): {
 export function updateQueryParams(params: { [key: string]: string }) {
     const search = new URLSearchParams(window.location.search);
     for (const key in params) {
-        // URL-encode each value:
-        search.set(key, encodeURIComponent(params[key]));
+        if (params[key]) {
+            search.set(key, params[key]);
+        } else {
+            search.delete(key);
+        }
     }
-    window.history.replaceState({}, "", `${window.location.pathname}?${search}`);
+    const query = search.toString();
+    window.history.replaceState({}, "", `${window.location.pathname}${query ? `?${query}` : ""}`);
 }
