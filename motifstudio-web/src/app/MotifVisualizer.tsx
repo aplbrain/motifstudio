@@ -7,6 +7,7 @@ import { BASE_URL, bodiedFetcher } from "./api";
 import { useRef } from "react";
 import ColorHash from "color-hash";
 import { getQueryParams } from "./queryparams";
+import { getMotifGraphEdges } from "./motifGraph";
 
 cytoscape.use(COSEBilkent);
 
@@ -53,7 +54,7 @@ export const MotifVisualizer = ({ motifSource }: { motifSource: string }) => {
                             },
                         };
                     }),
-                    ...(motifGraph?.links || []).map((link: any) => {
+                    ...getMotifGraphEdges(motifGraph).map((link: any) => {
                         return {
                             data: {
                                 ...link,
