@@ -128,13 +128,6 @@ export default function Home() {
                 onInsertPrimitive={handleInsertPrimitive}
             />
             <div className="mx-auto w-full max-w-[1600px] px-4 pb-12 pt-8 sm:px-6 lg:px-8">
-                <div className="mb-7">
-                    <h1 className="text-3xl font-semibold tracking-tight text-slate-950 dark:text-white">Explore a motif</h1>
-                    <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                        Choose a connectome, write a pattern, and inspect the matches.
-                    </p>
-                </div>
-
                 <section aria-label="Host graph selection" className="mb-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
                     <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                         <h2 className="text-lg font-semibold tracking-tight">Host graph</h2>
