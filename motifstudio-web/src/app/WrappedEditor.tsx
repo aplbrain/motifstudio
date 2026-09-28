@@ -176,7 +176,7 @@ export function WrappedEditor({
 
     return (
         <Editor
-            height="40vh"
+            height="420px"
             theme={prefersDark ? "motiftheme-dark" : "motiftheme"}
             beforeMount={handleEditorWillMount}
             onChange={(value) => {

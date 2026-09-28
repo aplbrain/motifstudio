@@ -19,11 +19,24 @@ export function ResultsFetcher({
     limit?: number;
 }) {
     const debouncedQuery = useDebounce(query, 500);
-    const controller = useRef<AbortController | null>(null);
+    const inFlight = useRef<{
+        key: string;
+        controller: AbortController;
+        promise: ReturnType<typeof bodiedFetcher>;
+    } | null>(null);
+    const mounted = useRef(false);
     const [page, setPage] = useState(0);
 
     useEffect(() => {
-        return () => controller.current?.abort();
+        mounted.current = true;
+        return () => {
+            mounted.current = false;
+            // Strict Mode re-runs effects on mount. Let that setup complete
+            // before cancelling a request for a component that truly unmounted.
+            queueMicrotask(() => {
+                if (!mounted.current) inFlight.current?.controller.abort();
+            });
+        };
     }, []);
 
     useEffect(() => {
@@ -34,11 +47,17 @@ export function ResultsFetcher({
         data: queryData,
         error: queryError,
         isLoading: queryIsLoading,
-    } = useSWR([`${BASE_URL}/queries/motifs`, graph?.id, debouncedQuery, queryType, limit], async () => {
-        controller.current?.abort();
+        isValidating: queryIsValidating,
+        mutate: retryQuery,
+    } = useSWR([`${BASE_URL}/queries/motifs`, graph?.id, debouncedQuery, queryType, limit], () => {
+        const key = JSON.stringify([graph?.id, debouncedQuery, queryType, limit]);
+        if (inFlight.current?.key === key) return inFlight.current.promise;
+
+        // A changed query supersedes the old request. Revalidating the same
+        // query shares its promise instead of aborting it.
+        inFlight.current?.controller.abort();
         const requestController = new AbortController();
-        controller.current = requestController;
-        return bodiedFetcher(
+        const promise = bodiedFetcher(
             `${BASE_URL}/queries/motifs`,
             {
                 host_id: graph?.id,
@@ -48,6 +67,16 @@ export function ResultsFetcher({
             },
             { signal: requestController.signal }
         );
+        inFlight.current = { key, controller: requestController, promise };
+        const clear = () => {
+            if (inFlight.current?.promise === promise) inFlight.current = null;
+        };
+        void promise.then(clear, clear);
+        return promise;
+    }, {
+        revalidateOnFocus: false,
+        revalidateOnReconnect: false,
+        shouldRetryOnError: false,
     });
 
     if (queryIsLoading) return <LoadingSpinner />;
@@ -55,7 +84,19 @@ export function ResultsFetcher({
     // If there was a fetching error, show it to the user
     if (queryError) {
         const msg = queryError instanceof Error ? queryError.message : String(queryError);
-        return <div className="text-red-500 p-4">Error fetching query: {msg}</div>;
+        return (
+            <div className="flex flex-wrap items-center gap-3 rounded-xl bg-rose-50 p-4 text-sm text-rose-700 dark:bg-rose-950 dark:text-rose-300">
+                <span>Error fetching query: {msg}</span>
+                <button
+                    type="button"
+                    className="rounded-lg border border-rose-200 px-3 py-1.5 font-semibold hover:bg-rose-100 disabled:opacity-50 dark:border-rose-800 dark:hover:bg-rose-900"
+                    disabled={queryIsValidating}
+                    onClick={() => void retryQuery()}
+                >
+                    {queryIsValidating ? "Retrying…" : "Retry query"}
+                </button>
+            </div>
+        );
     }
 
     let durationString = "";
@@ -146,36 +187,31 @@ export function ResultsFetcher({
 
     return (
         <>
-            <h2 className="text-xl font-mono w-full">Results</h2>
-            <hr className="my-2 w-full" />
-            <div className="flex flex-row gap-2 items-center">
-                <div className="w-full">
-                    <b>Result Count</b>
+            <h3 className="sr-only">Match details</h3>
+            <dl className="grid grid-cols-2 gap-3">
+                <div className="rounded-xl bg-slate-50 p-4 dark:bg-slate-800">
+                    <dt className="text-xs text-slate-500 dark:text-slate-400">Result count</dt>
+                    <dd className="mt-1 text-xl font-semibold tabular-nums">{motifCountString ?? "Error"}</dd>
                 </div>
-                <div className="w-full">{motifCountString ?? "Error"}</div>
-            </div>
-            <div className="flex flex-row gap-2 items-center">
-                <div className="w-full">
-                    <b>Query Duration</b>
-                </div>
-                <div className="w-full">
+                <div className="rounded-xl bg-slate-50 p-4 dark:bg-slate-800">
+                    <dt className="text-xs text-slate-500 dark:text-slate-400">Query duration</dt>
+                    <dd className="mt-1 text-xl font-semibold tabular-nums">
                     {queryData?.response_duration_ms ? (
                         <span>{durationString}</span>
                     ) : (
-                        <span className="text-red-500">Error</span>
+                        <span className="text-rose-600">Error</span>
                     )}
+                    </dd>
                 </div>
-            </div>
-            <div className="flex flex-row gap-2 items-center">
-                <div className="w-full">
-                    <b>Entities</b>
-                </div>
-                <div className="w-full">
+            </dl>
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+                <span className="mr-1 text-xs font-medium text-slate-500 dark:text-slate-400">Entities</span>
+                <div className="flex flex-wrap gap-1.5">
                     {(queryData?.motif_entities || []).map((e: string) => {
                         return (
                             <span
                                 key={e}
-                                className="px-2 py-1 bg-blue-100 rounded-md shadow-sm text-sm font-medium text-blue-800 mr-2"
+                                className="rounded-md bg-sky-50 px-2 py-1 font-mono text-xs font-medium text-sky-800 dark:bg-sky-950 dark:text-sky-300"
                             >
                                 {e}
                             </span>
@@ -183,21 +219,19 @@ export function ResultsFetcher({
                     })}
                 </div>
             </div>
-            <div className="flex flex-row gap-2 items-center">
-                <div className="w-full">
-                    <b>Download</b>
-                </div>
-                <div className="w-full flex gap-2">
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+                <span className="mr-1 text-xs font-medium text-slate-500 dark:text-slate-400">Download</span>
+                <div className="flex gap-2">
                     <button
                         type="button"
-                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold px-4 rounded"
+                        className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                         onClick={() => downloadResults("json")}
                     >
                         JSON
                     </button>
                     <button
                         type="button"
-                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold px-4 rounded"
+                        className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                         onClick={() => downloadResults("csv")}
                     >
                         CSV
@@ -205,29 +239,29 @@ export function ResultsFetcher({
                 </div>
             </div>
             <div className="flex flex-col gap-2">
-                <div className="max-h-64 overflow-auto">
-                    <table className="table-auto w-full">
+                <div className="max-h-72 overflow-auto rounded-xl border border-slate-200 dark:border-slate-700">
+                    <table className="w-full border-collapse text-sm">
                         <caption className="sr-only">Motif query results</caption>
-                        <thead className="border-b-2">
-                            <tr className="border-b-2">
-                                <th scope="col" className="text-left">
+                        <thead className="sticky top-0 bg-slate-50 text-xs font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-300">
+                            <tr>
+                                <th scope="col" className="px-3 py-2.5 text-left">
                                     Visualization
                                 </th>
                                 {(queryData?.motif_entities || []).map((entity: string) => (
-                                    <th scope="col" className="truncate text-left" key={entity}>
+                                    <th scope="col" className="truncate px-3 py-2.5 text-left" key={entity}>
                                         {entity}
                                     </th>
                                 ))}
                             </tr>
                         </thead>
-                        <tbody className="border-b-2">
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                             {pageResults.length ? (
                                 pageResults.map((result: any, i: number) => (
                                     <tr
                                         key={pageStart + i}
-                                        className="border-b-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                        className="hover:bg-sky-50/50 dark:hover:bg-slate-800"
                                     >
-                                        <td>
+                                        <td className="px-3 py-2.5">
                                             <a
                                                 href={neuroglancerUrlFromHostVolumetricData(
                                                     queryData?.host_volumetric_data?.uri,
@@ -246,8 +280,9 @@ export function ResultsFetcher({
                                                 )}
                                                 target="_blank"
                                                 rel="noreferrer"
+                                                className="font-semibold text-sky-700 hover:underline dark:text-sky-400"
                                             >
-                                                <b>View</b>
+                                                View
                                             </a>
                                         </td>
                                         {(queryData?.motif_entities || []).map((entity: string) => {
@@ -276,7 +311,7 @@ export function ResultsFetcher({
                                             }
 
                                             return (
-                                                <td key={entity} className="truncate max-w-xs" title={titleValue}>
+                                                <td key={entity} className="max-w-xs truncate px-3 py-2.5 font-mono text-xs" title={titleValue}>
                                                     {displayValue}
                                                 </td>
                                             );
@@ -287,7 +322,7 @@ export function ResultsFetcher({
                                 <tr>
                                     <td
                                         colSpan={(queryData?.motif_entities?.length || 0) + 1}
-                                        className="py-4 text-center"
+                                        className="px-3 py-6 text-center text-slate-500"
                                     >
                                         No results
                                     </td>
@@ -297,10 +332,10 @@ export function ResultsFetcher({
                     </table>
                 </div>
                 {pageCount > 1 && (
-                    <nav className="flex items-center justify-between gap-4" aria-label="Result pages">
+                    <nav className="flex flex-wrap items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400" aria-label="Result pages">
                         <button
                             type="button"
-                            className="rounded bg-blue-500 px-3 py-1 font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="rounded-lg border border-slate-200 px-3 py-1.5 font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                             disabled={page === 0}
                             onClick={() => setPage((current) => current - 1)}
                         >
@@ -312,7 +347,7 @@ export function ResultsFetcher({
                         </span>
                         <button
                             type="button"
-                            className="rounded bg-blue-500 px-3 py-1 font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="rounded-lg border border-slate-200 px-3 py-1.5 font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                             disabled={page === pageCount - 1}
                             onClick={() => setPage((current) => current + 1)}
                         >

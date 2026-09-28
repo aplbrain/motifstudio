@@ -52,10 +52,9 @@ export function GraphStats({
     }, [properties?.vertex_attributes, onAttributesLoaded]);
 
     // Use client-only check to avoid hydration mismatch
-    if (!isClient) return <div>Loading...</div>;
-    if (isLoading) return <div>Loading...</div>;
-    if (error) return <div>Error: {error.message || String(error)}</div>;
-    if (!properties) return <div>No data</div>;
+    if (!isClient || isLoading) return <div className="h-48 animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800" aria-label="Loading graph details" />;
+    if (error) return <div className="rounded-2xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950 dark:text-rose-300">Could not load graph details: {error.message || String(error)}</div>;
+    if (!properties) return <div className="text-sm text-slate-500">No graph details available.</div>;
 
     /**
      * Download the graph in a selected format.
@@ -106,88 +105,70 @@ export function GraphStats({
             });
     }
 
-    // Render the attributes and statistics.
-    return graph ? (
-        <div className="flex w-full h-full p-4 bg-white rounded-lg shadow-lg dark:bg-gray-800">
-            <div className="flex flex-col gap-2 w-full">
-                <h2 className="text-xl font-mono w-full">Graph Properties for {graph.name}</h2>
-                <hr className="my-2 w-full" />
-                {/* A "table" showing nodes/edges/density */}
-                <div className="flex flex-col gap-2">
-                    <div className="flex flex-row gap-2 items-center">
-                        <div className="w-1/2">
-                            <b>Nodes</b>
-                        </div>
-                        <div className="w-1/2">{properties.vertex_count}</div>
+    // Keep the counts at a glance; the attribute schema remains one click away.
+    return (
+        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div className="border-b border-slate-200 px-5 py-4 dark:border-slate-800">
+                <h2 className="text-lg font-semibold tracking-tight">Graph overview</h2>
+                <p className="mt-1 truncate text-sm text-slate-500 dark:text-slate-400" title={graph.name}>{graph.name}</p>
+            </div>
+            <div className="p-5">
+                <dl className="grid grid-cols-3 gap-2">
+                    <div className="min-w-0 rounded-xl bg-slate-50 px-3 py-3 dark:bg-slate-800">
+                        <dt className="text-xs text-slate-500 dark:text-slate-400">Nodes</dt>
+                        <dd className="mt-1 text-lg font-semibold tabular-nums">{properties.vertex_count.toLocaleString()}</dd>
                     </div>
-                    <div className="flex flex-row gap-2 items-center">
-                        <div className="w-1/2">
-                            <b>Edges</b>
-                        </div>
-                        <div className="w-1/2">{properties.edge_count}</div>
+                    <div className="min-w-0 rounded-xl bg-slate-50 px-3 py-3 dark:bg-slate-800">
+                        <dt className="text-xs text-slate-500 dark:text-slate-400">Edges</dt>
+                        <dd className="mt-1 text-lg font-semibold tabular-nums">{properties.edge_count.toLocaleString()}</dd>
                     </div>
-                    <div className="flex flex-row gap-2 items-center">
-                        <div className="w-1/2">
-                            <b>Density</b>
-                        </div>
-                        <div className="w-1/2">
-                            {properties.vertex_count === 0
-                                ? "0.000000"
-                                : (properties.edge_count / Math.pow(properties.vertex_count, 2)).toFixed(6)}
-                        </div>
+                    <div className="min-w-0 rounded-xl bg-slate-50 px-3 py-3 dark:bg-slate-800">
+                        <dt className="text-xs text-slate-500 dark:text-slate-400">Density</dt>
+                        <dd className="mt-1 text-lg font-semibold tabular-nums">
+                            {properties.vertex_count === 0 ? "0.000000" : (properties.edge_count / Math.pow(properties.vertex_count, 2)).toFixed(6)}
+                        </dd>
                     </div>
+                </dl>
+
+                <div className="mt-4 divide-y divide-slate-200 border-y border-slate-200 dark:divide-slate-800 dark:border-slate-800">
+                    <details className="group py-3">
+                        <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-sm font-medium marker:hidden">
+                            <span>Vertex attributes</span>
+                            <span className="text-xs text-slate-400">{Object.keys(properties.vertex_attributes || {}).length} fields <span aria-hidden="true">⌄</span></span>
+                        </summary>
+                        <div className="mt-3 flex flex-wrap gap-1.5">
+                            {Object.entries(properties.vertex_attributes || {}).map(([key, value]) => (
+                                <span key={key} className="rounded-md bg-sky-50 px-2 py-1 text-xs font-medium text-sky-800 dark:bg-sky-950 dark:text-sky-300">
+                                    {key} <span className="font-mono opacity-65">{value}</span>
+                                </span>
+                            ))}
+                        </div>
+                    </details>
+                    <details className="group py-3">
+                        <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-sm font-medium marker:hidden">
+                            <span>Edge attributes</span>
+                            <span className="text-xs text-slate-400">{Object.keys(properties.edge_attributes || {}).length} fields <span aria-hidden="true">⌄</span></span>
+                        </summary>
+                        <div className="mt-3 flex flex-wrap gap-1.5">
+                            {Object.entries(properties.edge_attributes || {}).map(([key, value]) => (
+                                <span key={key} className="rounded-md bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                                    {key} <span className="font-mono opacity-65">{value}</span>
+                                </span>
+                            ))}
+                        </div>
+                    </details>
                 </div>
 
-                <hr className="my-2 w-full" />
-
-                {/* Vertex attributes list */}
-                <h3 className="text-lg font-mono w-full">Vertex Attributes</h3>
-                <div className="flex flex-wrap gap-2">
-                    {properties.vertex_attributes
-                        ? Object.entries(properties.vertex_attributes).map(([key, value]) => (
-                            <span
-                                key={key}
-                                className="px-2 py-1 bg-blue-50 rounded-md shadow-sm text-sm font-medium text-blue-800"
-                            >
-                                {key} <b className="font-mono">({value})</b>
-                            </span>
-                        ))
-                        : null}
-                </div>
-
-                <hr className="my-2 w-full" />
-
-                {/* Edge attributes list */}
-                <h3 className="text-lg font-mono w-full">Edge Attributes</h3>
-                <div className="flex flex-wrap gap-2">
-                    {properties.edge_attributes
-                        ? Object.entries(properties.edge_attributes).map(([key, value]) => (
-                            <span
-                                key={key}
-                                className="px-2 py-1 bg-green-50 rounded-md shadow-sm text-sm font-medium text-green-800"
-                            >
-                                {key} <b className="font-mono">({value})</b>
-                            </span>
-                        ))
-                        : null}
-                </div>
-
-                <hr className="my-2 w-full" />
-
-                {/* Download graph buttons */}
-                <h3 className="text-lg font-mono w-full">Download graph</h3>
-                <div className="flex gap-2">
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Download graph</span>
+                    <div className="flex gap-2">
                     <button
                         onClick={() => downloadGraph("graphml")}
                         disabled={downloadingFormat !== null}
-                        className={`font-bold rounded text-white px-4 py-2 flex items-center gap-2 ${
-                            downloadingFormat === "graphml"
-                                ? "bg-blue-400 cursor-not-allowed"
-                                : "bg-blue-500 hover:bg-blue-700"
-                        }`}
+                        className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-wait disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                     >
                         {downloadingFormat === "graphml" && (
-                            <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                            <svg className="h-4 w-4 animate-spin text-slate-700 dark:text-slate-200" fill="none" viewBox="0 0 24 24">
                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                             </svg>
@@ -197,24 +178,19 @@ export function GraphStats({
                     <button
                         onClick={() => downloadGraph("gexf")}
                         disabled={downloadingFormat !== null}
-                        className={`font-bold rounded text-white px-4 py-2 flex items-center gap-2 ${
-                            downloadingFormat === "gexf"
-                                ? "bg-blue-400 cursor-not-allowed"
-                                : "bg-blue-500 hover:bg-blue-700"
-                        }`}
+                        className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-wait disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                     >
                         {downloadingFormat === "gexf" && (
-                            <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                            <svg className="h-4 w-4 animate-spin text-slate-700 dark:text-slate-200" fill="none" viewBox="0 0 24 24">
                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                             </svg>
                         )}
                         GEXF
                     </button>
+                    </div>
                 </div>
             </div>
-        </div>
-    ) : (
-        <div></div>
+        </section>
     );
 }

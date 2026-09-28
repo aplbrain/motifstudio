@@ -46,10 +46,9 @@ export function GraphForm({
     // Note that if the host cannot be reached, this is likely the first place
     // that the user will see an error message.
     // Use client-only check to avoid hydration mismatch
-    if (!isClient) return <div>Loading...</div>;
-    if (isLoading) return <div>Loading...</div>;
-    if (error) return <div>Error: {JSON.stringify(error)}</div>;
-    if (!data) return <div>No data</div>;
+    if (!isClient || isLoading) return <div className="h-11 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" aria-label="Loading graphs" />;
+    if (error) return <div className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:bg-rose-950 dark:text-rose-300">Could not load host graphs.</div>;
+    if (!data) return <div className="text-sm text-slate-500">No graphs available.</div>;
 
     // Filter graphs based on query string.
     const filteredGraphs =
@@ -59,18 +58,15 @@ export function GraphForm({
 
     // Return the dropdown with the filtered graphs as the options.
     return (
-        <div className="h-full bg-white p-4 rounded-lg shadow-lg dark:bg-gray-800">
-            <h2 className="text-xl font-mono">Host Graph</h2>
-            <hr className="my-2" />
-
+        <div>
             <Tab.Group selectedIndex={selectedTab} onChange={setSelectedTab}>
-                <Tab.List className="flex space-x-1 rounded-xl bg-blue-900/20 p-1">
+                <Tab.List className="mb-3 inline-flex rounded-lg bg-slate-100 p-1 dark:bg-slate-800">
                     <Tab
                         className={({ selected }) =>
-                            `w-full rounded-lg py-2.5 text-sm font-medium leading-5 text-blue-700 ring-white/60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2 ${
+                            `rounded-md px-4 py-1.5 text-sm font-medium outline-none focus-visible:ring-2 focus-visible:ring-sky-400 ${
                                 selected
-                                    ? "bg-white text-blue-700 shadow"
-                                    : "text-blue-100 hover:bg-white/[0.12] hover:text-white"
+                                    ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white"
+                                    : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white"
                             }`
                         }
                     >
@@ -78,23 +74,26 @@ export function GraphForm({
                     </Tab>
                     <Tab
                         className={({ selected }) =>
-                            `w-full rounded-lg py-2.5 text-sm font-medium leading-5 text-blue-700 ring-white/60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2 ${
+                            `rounded-md px-4 py-1.5 text-sm font-medium outline-none focus-visible:ring-2 focus-visible:ring-sky-400 ${
                                 selected
-                                    ? "bg-white text-blue-700 shadow"
-                                    : "text-blue-100 hover:bg-white/[0.12] hover:text-white"
+                                    ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white"
+                                    : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white"
                             }`
                         }
                     >
                         Upload Graph
                     </Tab>
                 </Tab.List>
-                <Tab.Panels className="mt-4">
-                    <Tab.Panel className="rounded-xl bg-white/5 p-3">
+                <Tab.Panels>
+                    <Tab.Panel>
                         {/* Database Host Selection */}
-                        <div className="flex flex-row gap-2 items-center">
-                            <DatabaseIcon />
-                            <div className="flow-col w-full">
+                        <div className="flex items-center gap-3">
+                            <div className="hidden rounded-lg bg-sky-50 p-2.5 text-sky-700 dark:bg-sky-950 dark:text-sky-300 sm:block">
+                                <DatabaseIcon />
+                            </div>
+                            <div className="min-w-0 flex-1">
                                 <Combobox
+                                    immediate
                                     onChange={(v) => {
                                         if (!v) {
                                             return;
@@ -107,35 +106,31 @@ export function GraphForm({
                                     value={selectedGraph}
                                 >
                                     <div className="relative">
+                                        <label htmlFor="host-graph-search" className="sr-only">Search host graphs</label>
                                         <Combobox.Input
+                                            id="host-graph-search"
                                             onChange={(event) => setQuery(event.target.value)}
-                                            className="w-full p-4 rounded-lg shadow-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent font-bold dark:bg-gray-900 dark:text-gray-200"
-                                            placeholder="Start typing or press the down arrow to choose a host graph..."
+                                            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 shadow-sm outline-none placeholder:font-normal placeholder:text-slate-400 focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-sky-950"
+                                            placeholder="Search or select a host graph…"
                                             displayValue={(graph: HostListing) => graph?.name}
                                         />
                                         {/* Show indicator for uploaded graphs */}
                                         {selectedGraph && !data.hosts.some((host) => host.id === selectedGraph.id) && (
                                             <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                                <span className="inline-flex items-center rounded-full bg-sky-100 px-2 py-1 text-xs font-medium text-sky-800 dark:bg-sky-900 dark:text-sky-200">
                                                     Uploaded
                                                 </span>
                                             </div>
                                         )}
-                                        <Combobox.Options className="p-3 rounded-lg shadow-lg border overflow-y-scroll max-h-64 absolute w-full z-10 bg-white dark:bg-gray-800">
+                                        <Combobox.Options className="absolute z-20 mt-2 max-h-64 w-full overflow-y-auto rounded-xl border border-slate-200 bg-white p-1 shadow-xl dark:border-slate-700 dark:bg-slate-900">
                                             {filteredGraphs.map((graph) => (
                                                 <Combobox.Option
                                                     key={graph.id}
                                                     value={graph}
-                                                    className={({ active }) => `${
-                                                        active
-                                                            ? "text-white bg-blue-400 dark:bg-blue-400 dark:text-white"
-                                                            : "text-gray-900 dark:text-gray-200"
-                                                    }
-                                                    cursor-default select-none relative py-2 pl-10 pr-4 hover:bg-blue-400 hover:text-white flex items-center justify-between text-sm
-                                                    `}
+                                                    className={({ active }) => `relative flex cursor-default select-none items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm ${active ? "bg-sky-50 text-sky-900 dark:bg-sky-950 dark:text-sky-100" : "text-slate-700 dark:text-slate-200"}`}
                                                 >
-                                                    <b className="font-bold">{graph.name}</b>{" "}
-                                                    <div className="text-xs inline font-mono ml-4">{graph.id}</div>
+                                                    <span className="min-w-0 truncate font-medium">{graph.name}</span>
+                                                    <span className="shrink-0 font-mono text-xs text-slate-400">{graph.id}</span>
                                                 </Combobox.Option>
                                             ))}
                                         </Combobox.Options>
@@ -144,7 +139,7 @@ export function GraphForm({
                             </div>
                         </div>
                     </Tab.Panel>
-                    <Tab.Panel className="rounded-xl bg-white/5 p-3">
+                    <Tab.Panel>
                         <GraphUpload onGraphUploaded={handleGraphUploaded} />
                     </Tab.Panel>
                 </Tab.Panels>

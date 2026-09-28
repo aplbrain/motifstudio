@@ -15,20 +15,15 @@ interface AppbarProps {
 
 export function Appbar({ queryText, queryType, currentGraph, onLoad, onInsertPrimitive }: AppbarProps) {
     return (
-        <div className="w-full items-center justify-between font-mono text-sm lg:flex p-4">
-            <div className="flex flex-row justify-between items-center w-full h-full p-4 bg-white rounded-lg shadow-lg dark:bg-gray-800">
-                <div className="flex items-center space-x-4">
+        <header className="w-full border-b border-slate-200 bg-white/95 dark:border-slate-800 dark:bg-slate-950">
+            <div className="mx-auto flex w-full max-w-[1600px] flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
+                <nav aria-label="Workspace menu" className="flex items-center gap-1 text-sm">
                     <FileMenu queryText={queryText} queryType={queryType} currentGraph={currentGraph} onLoad={onLoad} />
                     <PrimitivesMenu onInsertPrimitive={onInsertPrimitive} />
                     <HelpMenu />
-                </div>
-                <Image
-                    src={motifStudioLogo}
-                    alt="Motif Studio"
-                    // In dark mode, invert the logo colors. (Check theme with tailwind)
-                    className="object-contain h-8 w-auto dark:filter dark:invert"
-                />
+                </nav>
+                <Image src={motifStudioLogo} alt="Motif Studio" className="ml-auto h-8 w-auto dark:invert" priority />
             </div>
-        </div>
+        </header>
     );
 }

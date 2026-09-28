@@ -104,9 +104,11 @@ export const MotifVisualizer = ({ motifSource }: { motifSource: string }) => {
             layout={{
                 name: "cose-bilkent",
                 animate: false,
+                padding: 40,
             } as cytoscape.LayoutOptions}
             elements={[...elements.current]}
-            style={{ width: "100%", height: "100%", minHeight: "400px" }}
+            maxZoom={1.6}
+            style={{ width: "100%", height: "100%" }}
             stylesheet={[
                 {
                     selector: "node",
@@ -115,14 +117,14 @@ export const MotifVisualizer = ({ motifSource }: { motifSource: string }) => {
                         "text-valign": "center",
                         "text-halign": "center",
                         "background-color": "data(color)",
-                        color: "white",
-                        "text-outline-width": 1,
-                        "text-outline-color": "#11479e",
+                        "border-color": "#ffffff",
+                        "border-width": 2,
+                        color: "#ffffff",
                         shape: "roundrectangle",
-                        width: "label",
-                        height: "label",
-                        // Margin:
-                        padding: "4",
+                        width: 54,
+                        height: 46,
+                        "font-size": 18,
+                        "font-weight": "bold",
                     },
                 },
                 {
@@ -130,11 +132,14 @@ export const MotifVisualizer = ({ motifSource }: { motifSource: string }) => {
                     style: {
                         "curve-style": "bezier",
                         "target-arrow-shape": "triangle",
-                        "target-arrow-color": "#9dbaea",
-                        // "line-color": "#9dbaea",
+                        "target-arrow-color": "data(color)",
                         "line-color": "data(color)",
-                        "text-outline-width": 2,
-                        "text-outline-color": "#9dbaea",
+                        width: 2,
+                    },
+                },
+                {
+                    selector: "edge[label]",
+                    style: {
                         "font-size": "10px",
                         label: "data(label)",
                     },

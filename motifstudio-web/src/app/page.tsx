@@ -13,16 +13,13 @@ import { useDebounce } from "./useDebounce";
 
 const WrappedEditor = dynamic(() => import("./WrappedEditor").then((module) => module.WrappedEditor), {
     ssr: false,
-    loading: () => <div className="h-[40vh] animate-pulse bg-gray-100 dark:bg-gray-700" aria-label="Loading editor" />,
+    loading: () => <div className="h-[420px] animate-pulse bg-slate-100 dark:bg-slate-800" aria-label="Loading editor" />,
 });
 
 const MotifVisualizer = dynamic(() => import("./MotifVisualizer").then((module) => module.MotifVisualizer), {
     ssr: false,
     loading: () => (
-        <div
-            className="min-h-[400px] animate-pulse rounded-lg bg-gray-100 dark:bg-gray-800"
-            aria-label="Loading motif visualization"
-        />
+        <div className="h-[320px] animate-pulse bg-slate-100 dark:bg-slate-800" aria-label="Loading motif visualization" />
     ),
 });
 
@@ -34,32 +31,41 @@ const MotifVisualizer = dynamic(() => import("./MotifVisualizer").then((module) 
  * of the graph, the motif query, and the entities in the graph.
  */
 export default function Home() {
-    const { host_id, motif, host_name, query_type } =
-        typeof window !== "undefined"
-            ? getQueryParams()
-            : { host_id: "", motif: "", host_name: "", query_type: "dotmotif" };
-    const [currentGraph, setCurrentGraph] = useState<HostListing | undefined>(
-        host_id && host_name
-            ? {
-                  id: host_id,
-                  name: host_name,
-                  uri: "",
-                  provider: {},
-              }
-            : undefined
-    );
-    const [queryText, setQueryText] = useState(motif || "");
+    // URL parameters are only available in the browser. Start from the same
+    // state on the server and client, then restore a shared link after React
+    // has hydrated the page.
+    const [currentGraph, setCurrentGraph] = useState<HostListing | undefined>();
+    const [queryText, setQueryText] = useState("");
     const debouncedQueryText = useDebounce(queryText, 500);
-    const [queryType, setQueryType] = useState<"dotmotif" | "cypher">(
-        (query_type as "dotmotif" | "cypher") || "dotmotif"
-    );
+    const [queryType, setQueryType] = useState<"dotmotif" | "cypher">("dotmotif");
     const [entities, setEntities] = useState<{ [key: string]: string }>({});
+    const [hasLoadedQueryParams, setHasLoadedQueryParams] = useState(false);
 
     useEffect(() => {
-        if (typeof window !== "undefined") {
-            updateQueryParams({ motif: debouncedQueryText });
-        }
-    }, [debouncedQueryText]);
+        const { host_id, motif, host_name, query_type } = getQueryParams();
+
+        setCurrentGraph(
+            host_id && host_name
+                ? {
+                      id: host_id,
+                      name: host_name,
+                      uri: "",
+                      provider: {},
+                  }
+                : undefined
+        );
+        setQueryText(motif);
+        setQueryType((query_type as "dotmotif" | "cypher") || "dotmotif");
+        setHasLoadedQueryParams(true);
+    }, []);
+
+    useEffect(() => {
+        // On the first client render, the debounced value still reflects the
+        // empty SSR state. Wait until it catches up before writing the URL.
+        if (!hasLoadedQueryParams || debouncedQueryText !== queryText) return;
+
+        updateQueryParams({ motif: debouncedQueryText });
+    }, [debouncedQueryText, hasLoadedQueryParams, queryText]);
 
     function setSelectedGraph(graph: HostListing) {
         setCurrentGraph(graph);
@@ -113,7 +119,7 @@ export default function Home() {
     }
 
     return (
-        <main className="flex min-h-screen flex-col items-center">
+        <main className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
             <Appbar
                 queryText={queryText}
                 queryType={queryType}
@@ -121,38 +127,89 @@ export default function Home() {
                 onLoad={handleLoad}
                 onInsertPrimitive={handleInsertPrimitive}
             />
-            <div className="w-full justify-between text-sm lg:flex flex-row px-4 gap-4">
-                <div className="flex flex-col justify-center w-full h-full p-4 gap-4">
-                    <div className="bg-white rounded-lg shadow-lg pt-1 dark:bg-gray-800">
-                        <div className="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-700">
-                            <h3 className="text-lg font-medium dark:text-gray-200">Query Editor</h3>
-                            <div className="flex items-center gap-2">
-                                <label className="text-sm font-medium dark:text-gray-200">Language:</label>
-                                <select
-                                    value={queryType}
-                                    onChange={(e) => updateQueryType(e.target.value as "dotmotif" | "cypher")}
-                                    className="px-3 py-1 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent dark:bg-gray-900 dark:text-gray-200"
-                                >
-                                    <option value="dotmotif">DotMotif</option>
-                                    <option value="cypher">Cypher</option>
-                                </select>
-                            </div>
-                        </div>
-                        <WrappedEditor
-                            startValue={queryText}
-                            queryType={queryType}
-                            entityNames={currentGraph ? Object.keys(entities) : undefined}
-                            onChange={(value) => updateMotifTest(value || "")}
-                        />
+            <div className="mx-auto w-full max-w-[1600px] px-4 pb-12 pt-8 sm:px-6 lg:px-8">
+                <section aria-label="Host graph selection" className="mb-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                        <h2 className="text-lg font-semibold tracking-tight">Host graph</h2>
+                        {currentGraph ? (
+                            <span className="inline-flex max-w-full items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
+                                <span className="truncate">{currentGraph.name}</span>
+                            </span>
+                        ) : (
+                            <span className="text-xs text-slate-400">Select a graph to run queries</span>
+                        )}
                     </div>
                     <GraphForm startValue={currentGraph} onGraphChange={setSelectedGraph} />
-                </div>
-                <div className="div flex w-full flex-col py-4 gap-4">
-                    {queryText && queryType === "dotmotif" ? <MotifVisualizer motifSource={queryText} /> : null}
-                    {currentGraph ? <GraphStats graph={currentGraph} onAttributesLoaded={setEntities} /> : null}
-                    {currentGraph ? (
-                        <ResultsWrapper graph={currentGraph} query={queryText} queryType={queryType} />
-                    ) : null}
+                </section>
+
+                <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1.3fr)_minmax(360px,0.8fr)]">
+                    <div className="contents xl:flex xl:min-w-0 xl:flex-col xl:gap-5">
+                        <section aria-label="Query editor" className="order-1 min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-5 py-4 dark:border-slate-800">
+                                <h2 className="text-lg font-semibold tracking-tight">Query editor</h2>
+                                <label className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+                                    Language
+                                    <select
+                                        value={queryType}
+                                        onChange={(e) => updateQueryType(e.target.value as "dotmotif" | "cypher")}
+                                        className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-800 outline-none focus:ring-2 focus:ring-sky-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                                    >
+                                        <option value="dotmotif">DotMotif</option>
+                                        <option value="cypher">Cypher</option>
+                                    </select>
+                                </label>
+                            </div>
+                            <div className="pt-3">
+                                <WrappedEditor
+                                    startValue={queryText}
+                                    queryType={queryType}
+                                    entityNames={currentGraph ? Object.keys(entities) : undefined}
+                                    onChange={(value) => updateMotifTest(value || "")}
+                                />
+                            </div>
+                        </section>
+                        <div className="order-3 min-w-0">
+                            {currentGraph ? (
+                                <ResultsWrapper graph={currentGraph} query={queryText} queryType={queryType} />
+                            ) : (
+                                <section className="rounded-2xl border border-dashed border-slate-300 bg-white/60 p-5 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-400">
+                                    Choose a host graph above to run your query.
+                                </section>
+                            )}
+                        </div>
+                    </div>
+                    <aside className="contents xl:flex xl:min-w-0 xl:flex-col xl:gap-5" aria-label="Query context">
+                        <section className="order-2 min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                            <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-5 py-4 dark:border-slate-800">
+                                <h2 className="text-lg font-semibold tracking-tight">Motif preview</h2>
+                                <span className="rounded-full bg-sky-50 px-2.5 py-1 text-xs font-medium text-sky-700 dark:bg-sky-950 dark:text-sky-300">
+                                    {queryType === "dotmotif" ? "DotMotif" : "Cypher"}
+                                </span>
+                            </div>
+                            <div className="motif-preview relative h-[320px] overflow-hidden">
+                                {queryText && queryType === "dotmotif" ? (
+                                    <MotifVisualizer motifSource={queryText} />
+                                ) : (
+                                    <div className="flex h-full items-center justify-center px-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                                        {queryType === "cypher"
+                                            ? "Visual preview is available for DotMotif queries."
+                                            : "Write a DotMotif query to preview its structure."}
+                                    </div>
+                                )}
+                            </div>
+                            {queryText && queryType === "dotmotif" ? (
+                                <div className="border-t border-slate-200 px-5 py-3 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                                    Drag to pan · Scroll to zoom
+                                </div>
+                            ) : null}
+                        </section>
+                        {currentGraph ? (
+                            <div className="order-4 min-w-0">
+                                <GraphStats graph={currentGraph} onAttributesLoaded={setEntities} />
+                            </div>
+                        ) : null}
+                    </aside>
                 </div>
             </div>
         </main>
