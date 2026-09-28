@@ -22,10 +22,13 @@ export function ResultsWrapper({
     }, [graph, query, queryType]);
 
     return (
-        <div className="flex flex-col gap-2 w-full h-full p-4 bg-white rounded-lg shadow-lg dark:bg-gray-800">
+        <section aria-label="Query results" className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div className="border-b border-slate-200 px-5 py-4 dark:border-slate-800">
+                <h2 className="text-lg font-semibold tracking-tight">Query results</h2>
+            </div>
             {!trigger ? (
-                <div className="flex items-end gap-3">
-                    <label className="flex flex-col gap-1 text-sm font-medium dark:text-gray-200">
+                <div className="flex flex-wrap items-end justify-between gap-4 p-5">
+                    <label className="flex flex-col gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
                         Result limit
                         <input
                             type="number"
@@ -33,26 +36,28 @@ export function ResultsWrapper({
                             max={10000}
                             value={limit}
                             onChange={(event) => setLimit(Math.min(10000, Math.max(1, Number(event.target.value) || 1)))}
-                            className="w-32 rounded border border-gray-300 px-3 py-2 dark:bg-gray-900 dark:border-gray-600"
+                            className="w-32 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-sky-950"
                         />
                     </label>
                     <button
-                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                        className="rounded-lg bg-sky-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-sky-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 dark:bg-sky-600 dark:hover:bg-sky-500"
                         onClick={() => setTrigger(true)}
                     >
-                        Run Query
+                        Run Query <span aria-hidden="true" className="ml-2">→</span>
                     </button>
                 </div>
             ) : null}
             {trigger ? (
-                <ResultsFetcher
-                    key={`${graph?.id}:${query}:${queryType}`}
-                    graph={graph}
-                    query={query}
-                    queryType={queryType}
-                    limit={limit}
-                />
+                <div className="space-y-4 p-5">
+                    <ResultsFetcher
+                        key={`${graph?.id}:${query}:${queryType}`}
+                        graph={graph}
+                        query={query}
+                        queryType={queryType}
+                        limit={limit}
+                    />
+                </div>
             ) : null}
-        </div>
+        </section>
     );
 }
