@@ -7,7 +7,10 @@ services:
     build:
       context: ./motifstudio-web
       args:
-        NEXT_PUBLIC_API_BASE_URL: http://localhost:7082
+        # This value is compiled into the static browser bundle. Keep the
+        # default deployment pointed at the public API; use
+        # docker-compose.local.yml for a developer's local backend.
+        NEXT_PUBLIC_API_BASE_URL: https://api.motifstudio.bossdb.org
     ports:
       - "7080:80"
   motifstudio-server:
@@ -15,5 +18,4 @@ services:
     build: ./server
     ports:
       - "7082:8000"
-
 

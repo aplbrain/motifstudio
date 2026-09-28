@@ -84,10 +84,14 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-Set `NEXT_PUBLIC_API_BASE_URL` when building the static frontend to target a different API. If unset, the production API is used. Docker Compose builds the frontend against the local backend exposed at `http://localhost:7082`:
+The default Docker Compose configuration builds the frontend against the public
+API, which is safe for deployment. To develop against the local backend exposed
+at `http://localhost:7082`, include the local-only override. It must not be
+used when building the deployed frontend because `NEXT_PUBLIC_*` values are
+compiled into the browser bundle:
 
 ```bash
-docker compose up --build
+docker compose -f docker-compose.yml -f docker-compose.local.yml up --build
 ```
 
 
