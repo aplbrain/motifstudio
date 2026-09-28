@@ -448,7 +448,9 @@ def query_parse_motif(
                 query_type=motif_count_query_request.query_type,
                 motif_entities=[str(v) for v in motif.to_nx().nodes()],
                 motif_edges=[[str(u), str(v)] for u, v in motif.to_nx().edges()],
-                motif_nodelink_json=json.dumps(nx.readwrite.node_link_data(gnx)),
+                # Keep the API's established node-link field name. NetworkX 3.6
+                # changed its implicit default from "links" to "edges".
+                motif_nodelink_json=json.dumps(nx.readwrite.node_link_data(gnx, edges="links")),
                 host_id=motif_count_query_request.host_id,
                 response_time=datetime.datetime.now().isoformat(),
                 response_duration_ms=(time.time() - tic) * 1000,

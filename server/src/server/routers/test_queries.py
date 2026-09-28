@@ -1,10 +1,11 @@
+import json
 from unittest.mock import Mock, patch
 
 import pytest
 from fastapi import HTTPException
 
-from ...models import DownloadGraphQueryRequest, MotifQueryRequest
-from .queries import _run_graph_operation, _serialize_graph
+from ...models import DownloadGraphQueryRequest, MotifParseQueryRequest, MotifQueryRequest
+from .queries import _run_graph_operation, _serialize_graph, query_parse_motif
 from ...host_provider.host_provider.host_provider import NetworkXHostProvider
 
 
@@ -108,3 +109,14 @@ def test_motif_aggregation_preserves_match_count():
 
     assert count == 6
     assert len(results) == 2
+
+
+def test_motif_parse_uses_the_links_node_link_field():
+    response = query_parse_motif(MotifParseQueryRequest(host_id="", query="A -> B"), _commons())
+    motif_graph = json.loads(response.motif_nodelink_json)
+
+    assert "links" in motif_graph
+    assert "edges" not in motif_graph
+    assert motif_graph["links"] == [
+        {"exists": True, "action": "SYN", "constraints": {}, "source": "A", "target": "B", "key": 0}
+    ]
