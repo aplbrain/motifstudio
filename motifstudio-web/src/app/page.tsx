@@ -34,32 +34,41 @@ const MotifVisualizer = dynamic(() => import("./MotifVisualizer").then((module) 
  * of the graph, the motif query, and the entities in the graph.
  */
 export default function Home() {
-    const { host_id, motif, host_name, query_type } =
-        typeof window !== "undefined"
-            ? getQueryParams()
-            : { host_id: "", motif: "", host_name: "", query_type: "dotmotif" };
-    const [currentGraph, setCurrentGraph] = useState<HostListing | undefined>(
-        host_id && host_name
-            ? {
-                  id: host_id,
-                  name: host_name,
-                  uri: "",
-                  provider: {},
-              }
-            : undefined
-    );
-    const [queryText, setQueryText] = useState(motif || "");
+    // URL parameters are only available in the browser. Start from the same
+    // state on the server and client, then restore a shared link after React
+    // has hydrated the page.
+    const [currentGraph, setCurrentGraph] = useState<HostListing | undefined>();
+    const [queryText, setQueryText] = useState("");
     const debouncedQueryText = useDebounce(queryText, 500);
-    const [queryType, setQueryType] = useState<"dotmotif" | "cypher">(
-        (query_type as "dotmotif" | "cypher") || "dotmotif"
-    );
+    const [queryType, setQueryType] = useState<"dotmotif" | "cypher">("dotmotif");
     const [entities, setEntities] = useState<{ [key: string]: string }>({});
+    const [hasLoadedQueryParams, setHasLoadedQueryParams] = useState(false);
 
     useEffect(() => {
-        if (typeof window !== "undefined") {
-            updateQueryParams({ motif: debouncedQueryText });
-        }
-    }, [debouncedQueryText]);
+        const { host_id, motif, host_name, query_type } = getQueryParams();
+
+        setCurrentGraph(
+            host_id && host_name
+                ? {
+                      id: host_id,
+                      name: host_name,
+                      uri: "",
+                      provider: {},
+                  }
+                : undefined
+        );
+        setQueryText(motif);
+        setQueryType((query_type as "dotmotif" | "cypher") || "dotmotif");
+        setHasLoadedQueryParams(true);
+    }, []);
+
+    useEffect(() => {
+        // On the first client render, the debounced value still reflects the
+        // empty SSR state. Wait until it catches up before writing the URL.
+        if (!hasLoadedQueryParams || debouncedQueryText !== queryText) return;
+
+        updateQueryParams({ motif: debouncedQueryText });
+    }, [debouncedQueryText, hasLoadedQueryParams, queryText]);
 
     function setSelectedGraph(graph: HostListing) {
         setCurrentGraph(graph);
