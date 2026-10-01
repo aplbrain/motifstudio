@@ -3,7 +3,9 @@
 </h1>
 <p align=center>Motif Studio is a browser-based tool for querying connectomes with the <a href="https://github.com/aplbrain/dotmotif">DotMotif</a> motif query language.</p>
 
-![image](https://github.com/aplbrain/motifstudio-web/assets/693511/d6223400-6089-4da9-892c-0e12ae83ff9f)
+<!-- ![image](https://github.com/aplbrain/motifstudio-web/assets/693511/d6223400-6089-4da9-892c-0e12ae83ff9f) -->
+
+![](https://github.com/user-attachments/assets/f6bbbe78-711b-40fe-895a-76db73553cf9)
 
 ---
 
@@ -71,7 +73,6 @@ pytest
 
 ## Running the web application
 
-
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ## Getting Started
@@ -93,7 +94,6 @@ compiled into the browser bundle:
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.local.yml up --build
 ```
-
 
 ---
 
